@@ -194,10 +194,10 @@ macro_rules! server_response_warning {
 #[macro_export]
 macro_rules! server_redirect {
     ($url: expr) => {
-        $crate::response::redirect(url, None)
+        $crate::response::redirect($url, None)
     };
 
     ($url: expr, $status_code: expr) => {
-        $crate::response::redirect(url, $status_code)
+        $crate::response::redirect($url, $status_code)
     };
 }
