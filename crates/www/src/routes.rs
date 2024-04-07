@@ -3,23 +3,20 @@ pub use web_core::route_prelude::*;
 fn build_view_routes(cfg: &mut ServiceConfig) {
     cfg.service(resource("/").to(crate::controllers::views::index));
 
-    // 404.
+    // 404 - Only Get.
     cfg.service(resource("/404").route(get().to(crate::controllers::views::not_found)));
 }
 
 fn build_greeting_routes(cfg: &mut ServiceConfig) {
     cfg.service(
-        resource("/greeting/hello")
-            .wrap(crate::middlewares::demo::SayHi) // Second one.
-            .wrap(crate::middlewares::prerequisites::RequireJson) // First middleware.
-            .to(crate::controllers::greeting::hello),
-    );
-
-    cfg.service(
-        resource("/greeting/hello4")
+        scope("/greeting")
+            .wrap(crate::middlewares::demo::SayHi) // Third one.
             .wrap(crate::middlewares::prerequisites::RequireJson) // Second one.
-            .wrap(crate::middlewares::prerequisites::ForAjaxReqOnly) // First middleware.
-            .route(get().to(crate::controllers::greeting::hello4)),
+            .wrap(crate::middlewares::extensions::ExtensionDistributeCache) // First middleware.
+            .service((
+                resource("/hello").to(crate::controllers::greeting::hello),
+                resource("/hello4").to(crate::controllers::greeting::hello4),
+            )),
     );
 
     cfg.service(

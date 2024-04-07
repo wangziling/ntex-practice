@@ -1,4 +1,5 @@
-pub use web_core::handler_prelude::*;
+use crate::cache::prelude::*;
+use web_core::handler_prelude::*;
 
 #[derive(Serialize)]
 struct HelloWorld {
@@ -6,10 +7,15 @@ struct HelloWorld {
 }
 
 // #[instrument(skip_all)]
-pub async fn hello(state: State<crate::app::AppState>) -> &'static str {
+pub async fn hello(req: HttpRequest, state: State<crate::app::AppState>) -> AppResult<&'static str> {
+    let extensions = req.extensions();
+    let _distribute_cache = extensions
+        .get::<DistributeCacheExtension>()
+        .ok_or_else(|| anyhow_error("Missing distribute cache extension.".into()))?;
+
     info!("Ip: {}, Port: {}", state.config.ip, state.config.port);
 
-    "Hello world!"
+    Ok("Hello world!")
 }
 
 #[get("/hello2")]

@@ -6,6 +6,8 @@ pub enum MiddlewareError {
     RequireJsonFormat,
     #[error("Only for `ajax` remote call.")]
     ForAjaxReqOnly,
+    #[error("App state missing.")]
+    AppStateMissing,
 }
 
 impl From<MiddlewareError> for BoxedAppError {
