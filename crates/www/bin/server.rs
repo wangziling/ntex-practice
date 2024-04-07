@@ -15,6 +15,7 @@ async fn main() -> Result<()> {
             .wrap(ntex::web::middleware::DefaultHeaders::new().header("X-Powered-By", "ntex-rs"))
             .state(web_www::app::AppState(app.clone()))
             .configure(web_www::routes::build_routes)
+            .default_service(web_www::routes::fallback_service())
     })
     .bind(server_bind)?
     .run()
