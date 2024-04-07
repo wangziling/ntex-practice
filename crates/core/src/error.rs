@@ -109,6 +109,12 @@ impl From<serde_urlencoded::ser::Error> for BoxedAppError {
     }
 }
 
+impl From<ntex::http::uri::InvalidUri> for BoxedAppError {
+    fn from(error: ntex::http::uri::InvalidUri) -> Self {
+        Box::new(error)
+    }
+}
+
 impl ErrorField {
     pub fn new(boxed_error: BoxedAppError) -> Self {
         Self(std::rc::Rc::new(boxed_error))
@@ -159,4 +165,8 @@ pub fn internal_app_error(description: std::borrow::Cow<'static, str>) -> BoxedA
 
 pub fn server_error_response(description: std::borrow::Cow<'static, str>) -> ntex::web::HttpResponse {
     InternalAppError { description }.response()
+}
+
+pub fn anyhow_error(description: std::borrow::Cow<'static, str>) -> BoxedAppError {
+    anyhow!(description).into()
 }

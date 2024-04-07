@@ -1,10 +1,13 @@
 use crate::error::Result;
 
-type QueryContentMap = std::collections::HashMap<String, String>;
+pub(crate) type QueryItemKey = String;
+pub(crate) type QueryItemContent = String;
 
-type QueryMap = ntex::web::types::Query<QueryContentMap>;
+pub(crate) type QueryContentMap = std::collections::HashMap<QueryItemKey, QueryItemContent>;
 
-type QueryResult = Result<QueryMap, ntex::web::error::QueryPayloadError>;
+pub(crate) type QueryMap = ntex::web::types::Query<QueryContentMap>;
+
+type QueryResult = Result<QueryMap>;
 
 pub trait HttpRequestExt {
     fn query(&self) -> QueryResult;
@@ -14,7 +17,7 @@ pub trait HttpRequestExt {
 
 impl HttpRequestExt for ntex::web::HttpRequest {
     fn query(&self) -> QueryResult {
-        QueryMap::from_query(self.query_string())
+        QueryMap::from_query(self.query_string()).map_err(Into::into)
     }
 
     fn extend_query_string(&self, query_params: QueryContentMap) -> Result<String> {
@@ -25,9 +28,7 @@ impl HttpRequestExt for ntex::web::HttpRequest {
     }
 
     fn query_to_string(input: QueryMap) -> Result<String> {
-        let query_string = serde_urlencoded::to_string(input.into_inner())?;
-
-        Ok(query_string)
+        crate::utils::query_to_string(input)
     }
 }
 
@@ -58,5 +59,50 @@ impl<T: ntex::http::HttpMessage> RequestUtils for T {
 
     fn derived_from_ajax(&self) -> bool {
         header_contains!(self.message_headers(), "x-requested-with", "XMLHttpRequest", ignore_case: true)
+    }
+}
+
+pub trait UriUtils {
+    fn query_map(&self) -> QueryResult;
+    fn update_query(&mut self, key: QueryItemKey, value: Option<QueryItemContent>) -> QueryResult;
+    fn update_query_map(&mut self, target_query_map: QueryContentMap) -> QueryResult;
+    fn remove_query<T>(&mut self, keys: T) -> QueryResult
+    where
+        T: Iterator<Item = QueryItemKey>;
+}
+
+impl UriUtils for ntex::http::Uri {
+    fn query_map(&self) -> QueryResult {
+        match self.query() {
+            Some(query) => QueryMap::from_query(query).map_err(Into::into),
+            None => ntex::web::types::Query::from_query(Default::default()).map_err(Into::into),
+        }
+    }
+
+    fn update_query(&mut self, key: QueryItemKey, value: Option<QueryItemContent>) -> QueryResult {
+        let mut query_map = self.query_map()?;
+
+        crate::utils::update_query(&mut query_map, key, value)?;
+
+        Ok(query_map)
+    }
+
+    fn update_query_map(&mut self, target_query_map: QueryContentMap) -> QueryResult {
+        let mut query_map = self.query_map()?;
+
+        crate::utils::update_query_map(&mut query_map, target_query_map)?;
+
+        Ok(query_map)
+    }
+
+    fn remove_query<T>(&mut self, keys: T) -> QueryResult
+    where
+        T: Iterator<Item = QueryItemKey>,
+    {
+        let mut query_map = self.query_map()?;
+
+        crate::utils::remove_query(&mut query_map, keys)?;
+
+        Ok(query_map)
     }
 }

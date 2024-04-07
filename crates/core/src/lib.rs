@@ -2,11 +2,15 @@
 extern crate tracing;
 
 #[macro_use]
+extern crate anyhow;
+
+#[macro_use]
 mod macros;
 
 pub mod error;
 pub mod features;
 pub mod response;
+pub mod utils;
 pub mod view_template;
 
 pub mod prelude {
@@ -24,11 +28,13 @@ pub mod error_prelude {
 }
 
 pub mod route_prelude {
-    pub use crate::features::HttpRequestExt;
-    pub use crate::features::RequestUtils;
+    pub use crate::error::anyhow_error;
+    pub use crate::features::{HttpRequestExt, RequestUtils, UriUtils};
     pub use crate::prelude::*;
     pub use crate::server_redirect;
     pub use crate::server_response_failed;
+    pub use crate::utils::{query_to_string, remove_query, update_query, update_query_map};
+
     pub use ntex::http::{Method, RequestHead};
     pub use ntex::web::{get, guard, post, resource, route, scope, to, Route, ServiceConfig};
     pub use ntex::web::{HttpRequest, HttpResponse};
