@@ -1,0 +1,25 @@
+[package]
+name = "web_www"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+readme.workspace = true
+description.workspace = true
+license.workspace = true
+default-run = "server"
+
+[dependencies]
+web_core.workspace = true
+web_env.workspace = true
+ntex.workspace = true
+tracing.workspace = true
+tracing-subscriber.workspace = true
+anyhow.workspace = true
+thiserror.workspace = true
+serde.workspace = true
+serde_json.workspace = true
+sailfish.workspace = true
+
+[[bin]]
+name = "server"
+path = "bin/server.rs"

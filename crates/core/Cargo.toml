@@ -1,0 +1,19 @@
+[package]
+name = "web_core"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+readme.workspace = true
+description.workspace = true
+license.workspace = true
+
+[dependencies]
+web_proc_macros.workspace = true
+ntex.workspace = true
+anyhow.workspace = true
+thiserror.workspace = true
+tracing.workspace = true
+serde.workspace = true
+serde_json.workspace = true
+sailfish.workspace = true
+serde_urlencoded.workspace = true

@@ -1,0 +1,16 @@
+[package]
+name = "web_env"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+readme.workspace = true
+description.workspace = true
+license.workspace = true
+
+[dependencies]
+dotenvy.workspace = true
+anyhow.workspace = true
+
+[dev-dependencies]
+claims = "0.7"
+once_cell.workspace = true
