@@ -1,3 +1,6 @@
+#[cfg(feature = "enable-redis")]
+pub mod redis;
+
 #[derive(Clone, Debug)]
 pub struct ErrorField(pub std::rc::Rc<BoxedAppError>);
 
@@ -54,6 +57,9 @@ impl<E: std::error::Error + Send + 'static> AppError for E {
         server_error_response(self.to_string().into())
     }
 }
+
+// =============================================================================
+// Error impls
 
 impl From<serde_json::Error> for BoxedAppError {
     fn from(error: serde_json::Error) -> BoxedAppError {
@@ -126,6 +132,9 @@ impl ntex::web::WebResponseError for BoxedAppError {
         self.response()
     }
 }
+
+// =============================================================================
+// Internal error
 
 #[derive(Debug, Clone)]
 pub struct InternalAppError {
