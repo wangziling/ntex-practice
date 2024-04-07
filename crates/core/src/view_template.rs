@@ -7,9 +7,18 @@ pub struct ViewTemplateBase {
 impl Default for ViewTemplateBase {
     fn default() -> Self {
         Self {
-            title: "Axum web.".to_string(),
-            description: "A simple web application based on Rust-Axum.".to_string(),
+            title: "Ntex web.".to_string(),
+            description: "A simple web application based on Rust-Ntex.".to_string(),
             language: "en-US".to_string(),
         }
     }
+}
+
+pub trait ViewTemplate {
+    fn title(&self) -> &str;
+    fn description(&self) -> &str;
+    fn language(&self) -> &str;
+    fn set_title(&mut self, title: String) -> &mut Self;
+    fn set_description(&mut self, description: String) -> &mut Self;
+    fn set_language(&mut self, language: String) -> &mut Self;
 }

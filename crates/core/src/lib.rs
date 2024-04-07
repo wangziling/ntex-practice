@@ -24,9 +24,14 @@ pub mod error_prelude {
 }
 
 pub mod route_prelude {
+    pub use crate::features::HttpRequestExt;
+    pub use crate::features::RequestUtils;
     pub use crate::prelude::*;
-    pub use ntex::http::RequestHead;
-    pub use ntex::web::{get, guard, post, resource, route, scope, to, ServiceConfig};
+    pub use crate::server_redirect;
+    pub use crate::server_response_failed;
+    pub use ntex::http::{Method, RequestHead};
+    pub use ntex::web::{get, guard, post, resource, route, scope, to, Route, ServiceConfig};
+    pub use ntex::web::{HttpRequest, HttpResponse};
 }
 
 pub mod middleware_prelude {
