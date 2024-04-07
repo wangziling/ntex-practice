@@ -37,4 +37,4 @@ syn = { version = "2.0", features = ["derive"] }
 quote = { version = "1.0" }
 once_cell = { version = "1.19" }
 serde_urlencoded = { version = "0.7.1" }
-
+fred = { version = "8.0", features = ["partial-tracing", "serde-json"] }
