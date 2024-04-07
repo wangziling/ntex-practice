@@ -1,4 +1,4 @@
-pub use web_core::handler_prelude::*;
+use web_core::handler_prelude::*;
 use web_core::view_template::ViewTemplate;
 
 #[web_view_template]

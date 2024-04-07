@@ -1,4 +1,4 @@
-pub use web_core::route_prelude::*;
+use web_core::route_prelude::*;
 
 fn build_view_routes(cfg: &mut ServiceConfig) {
     cfg.service(resource("/").to(crate::controllers::views::index));
