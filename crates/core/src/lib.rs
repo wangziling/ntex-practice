@@ -26,7 +26,7 @@ pub mod error_prelude {
 pub mod route_prelude {
     pub use crate::prelude::*;
     pub use ntex::http::RequestHead;
-    pub use ntex::web::{get, guard, post, route, scope, to, ServiceConfig};
+    pub use ntex::web::{get, guard, post, resource, route, scope, to, ServiceConfig};
 }
 
 pub mod middleware_prelude {

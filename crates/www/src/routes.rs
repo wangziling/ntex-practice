@@ -1,4 +1,3 @@
-use ntex::web::resource;
 pub use web_core::route_prelude::*;
 
 fn build_view_routes(cfg: &mut ServiceConfig) {
