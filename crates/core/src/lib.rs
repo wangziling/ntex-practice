@@ -14,14 +14,11 @@ pub mod utils;
 pub mod view_template;
 
 pub mod prelude {
-    pub use crate::error::internal_app_error;
     pub use crate::error::Result;
 }
 
 pub mod error_prelude {
-    pub use crate::error::AppError;
-    pub use crate::error::AppResult;
-    pub use crate::error::BoxedAppError;
+    pub use crate::error::{anyhow_error, internal_app_error, AppError, AppResult, BoxedAppError};
     pub use crate::prelude::*;
 
     pub use ntex::web::WebResponseError;
@@ -41,29 +38,25 @@ pub mod route_prelude {
 }
 
 pub mod middleware_prelude {
-    pub use crate::features::HttpRequestExt;
-    pub use crate::features::RequestUtils;
+    pub use crate::error::anyhow_error;
+    pub use crate::features::{HttpRequestExt, RequestUtils, UriUtils};
     pub use crate::prelude::*;
-    pub use crate::response::map_view_render_result;
-    pub use crate::response::ResponseStatus;
-    pub use crate::response::ServerResponse;
+    pub use crate::response::{map_view_render_result, ResponseStatus, ServerResponse};
     pub use crate::server_redirect;
     pub use crate::server_response_failed;
     pub use crate::server_response_success;
     pub use crate::server_response_warning;
+    pub use crate::utils::{query_to_string, remove_query, update_query, update_query_map};
 
     pub use ntex::service::{Middleware, Service, ServiceCtx};
     pub use ntex::web::{Error, ErrorRenderer, WebRequest, WebResponse};
 }
 
 pub mod handler_prelude {
-    pub use crate::error::AppResult;
-    pub use crate::features::HttpRequestExt;
-    pub use crate::features::RequestUtils;
+    pub use crate::error::{anyhow_error, AppResult};
+    pub use crate::features::{HttpRequestExt, RequestUtils, UriUtils};
     pub use crate::prelude::*;
-    pub use crate::response::map_view_render_result;
-    pub use crate::response::ResponseStatus;
-    pub use crate::response::ServerResponse;
+    pub use crate::response::{map_view_render_result, ResponseStatus, ServerResponse};
     pub use crate::server_redirect;
     pub use crate::server_response_failed;
     pub use crate::server_response_success;
