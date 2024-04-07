@@ -8,6 +8,7 @@ pub mod config;
 pub mod routes;
 pub mod utils;
 
+mod cache;
 mod controllers;
 mod error;
 mod middlewares;

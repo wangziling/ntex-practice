@@ -19,7 +19,12 @@ thiserror.workspace = true
 serde.workspace = true
 serde_json.workspace = true
 sailfish.workspace = true
+fred = { workspace = true, optional = true }
 
 [[bin]]
 name = "server"
 path = "bin/server.rs"
+
+[features]
+default = ["enable-redis"]
+enable-redis = ["dep:fred", "web_core/enable-redis"]
