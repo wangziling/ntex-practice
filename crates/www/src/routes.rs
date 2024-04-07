@@ -40,7 +40,18 @@ pub fn fallback_service() -> Route {
         }
 
         if req.method() == Method::GET {
-            return server_redirect!("/404");
+            let mut uri = "/404".parse::<ntex::http::Uri>()?;
+
+            match req.uri().path_and_query() {
+                Some(path_query) => {
+                    let query_map = uri.update_query("prev".to_string(), Some(path_query.to_string()))?;
+
+                    return server_redirect!(uri.path().to_string() + &query_to_string(query_map)?);
+                },
+                _ => {}
+            }
+
+            return server_redirect!(uri.to_string());
         }
 
         // Not found.
