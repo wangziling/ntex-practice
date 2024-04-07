@@ -11,7 +11,7 @@ pub async fn hello(req: HttpRequest, state: State<crate::app::AppState>) -> AppR
     let extensions = req.extensions();
     let _distribute_cache = extensions
         .get::<DistributeCacheExtension>()
-        .ok_or_else(|| anyhow_error("Missing distribute cache extension.".into()))?;
+        .ok_or_else(|| anyhow_error(crate::error::ExtensionError::DistributeCacheMissing.to_string().into()))?;
 
     info!("Ip: {}, Port: {}", state.config.ip, state.config.port);
 

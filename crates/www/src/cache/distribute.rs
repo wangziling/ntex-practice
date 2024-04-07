@@ -49,7 +49,7 @@ impl Deref for DistributeCacheExtension {
 
 // impl<T: ntex::http::HttpMessage> RequestDistributeCache for T {
 //     fn distribute_cache(&self) -> &DistributeCacheExtension {
-//         self.message_extensions().get::<DistributeCacheExtension>().expect("Missing distribute cache extension.")
+//         self.message_extensions().get::<DistributeCacheExtension>().expect(crate::error::ExtensionError::DistributeCacheMissing.to_string())
 //     }
 // }
 
