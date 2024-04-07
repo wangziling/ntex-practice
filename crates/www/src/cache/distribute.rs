@@ -35,6 +35,7 @@ impl DerefMut for DistributeCache {
 }
 
 pub struct DistributeCacheExtension(pub DistributeCacheGlobal);
+
 impl Deref for DistributeCacheExtension {
     type Target = DistributeCacheGlobal;
     fn deref(&self) -> &Self::Target {
@@ -73,7 +74,7 @@ pub async fn generate(config: DistributeCacheConfig) -> Result<DistributeCacheGl
     let _ = client.connect();
 
     // No need to use the `?` to wait for being connected.
-    let _ = client.wait_for_connect().await?;
+    let _ = client.wait_for_connect().await;
 
     Ok(Arc::new(client))
 }
