@@ -1,0 +1,25 @@
+<script type="text/javascript">
+  (function () {
+    function mb(p) {
+      return function mb(o) {
+        return p.map(function (c) {
+          return o = (o || {})[c]
+        }) && o
+      }
+    }
+
+    // Judge dark mode.
+    document.documentElement.classList.add(
+      mb(['matches'])(window.matchMedia('(prefers-color-scheme: dark)'))
+        ? 'theme-dark'
+        : 'theme-light',
+    )
+
+    // Modern browser
+    try {
+      let _
+    } catch (e) {
+      document.documentElement.classList.add('browser-outdated')
+    }
+  })();
+</script>
