@@ -15,9 +15,6 @@ impl Default for ViewTemplateBase {
 }
 
 pub trait ViewTemplate {
-    fn title(&self) -> &str;
-    fn description(&self) -> &str;
-    fn language(&self) -> &str;
     fn set_title(&mut self, title: String) -> &mut Self;
     fn set_description(&mut self, description: String) -> &mut Self;
     fn set_language(&mut self, language: String) -> &mut Self;
