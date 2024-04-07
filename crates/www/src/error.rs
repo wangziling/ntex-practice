@@ -1,5 +1,15 @@
 use web_core::{error_prelude::*, features::RequestUtils, server_response_failed};
 
+pub trait ErrorExt: ToString {
+    fn into_app_error(&self) -> BoxedAppError {
+        anyhow_error(self.to_string().into())
+    }
+}
+
+pub mod prelude {
+    pub use crate::error::ErrorExt;
+}
+
 macro_rules! error_impl {
     ($ident:ident) => {
         impl From<$ident> for BoxedAppError {
@@ -17,6 +27,8 @@ macro_rules! error_impl {
                 return self.response();
             }
         }
+
+        impl ErrorExt for $ident {}
     };
 
     ($ident:ident, $status_code:expr) => {
@@ -39,6 +51,8 @@ macro_rules! error_impl {
                 return self.response();
             }
         }
+
+        impl ErrorExt for $ident {}
     };
 }
 

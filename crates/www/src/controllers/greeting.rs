@@ -1,4 +1,4 @@
-use crate::cache::prelude::*;
+use crate::{cache::prelude::*, error::prelude::*};
 use web_core::handler_prelude::*;
 
 #[derive(Serialize)]
@@ -9,9 +9,11 @@ struct HelloWorld {
 // #[instrument(skip_all)]
 pub async fn hello(req: HttpRequest, state: State<crate::app::AppState>) -> AppResult<&'static str> {
     let extensions = req.extensions();
-    let _distribute_cache = extensions
+    let distribute_cache = extensions
         .get::<DistributeCacheExtension>()
-        .ok_or_else(|| anyhow_error(crate::error::ExtensionError::DistributeCacheMissing.to_string().into()))?;
+        .ok_or_else(|| crate::error::ExtensionError::DistributeCacheMissing.into_app_error())?;
+
+    let _test_val = distribute_cache.get::<RedisValue, _>("test").await?.into_string();
 
     info!("Ip: {}, Port: {}", state.config.ip, state.config.port);
 
