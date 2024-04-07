@@ -46,7 +46,7 @@ pub fn fallback_service() -> Route {
                 Some(path_query) => {
                     let query_map = uri.update_query("prev".to_string(), Some(path_query.to_string()))?;
 
-                    return server_redirect!(uri.path().to_string() + &query_to_string(query_map)?);
+                    return server_redirect!(uri.path().to_string() + "?" + &query_to_string(query_map)?);
                 },
                 _ => {}
             }
