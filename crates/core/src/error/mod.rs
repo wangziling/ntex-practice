@@ -2,7 +2,7 @@
 pub mod redis;
 
 #[derive(Clone, Debug)]
-pub struct ErrorField(pub std::rc::Rc<BoxedAppError>);
+pub struct ErrorField(std::rc::Rc<BoxedAppError>);
 
 pub type Result<Res, Err = anyhow::Error> = anyhow::Result<Res, Err>;
 
@@ -124,6 +124,14 @@ impl From<ntex::http::uri::InvalidUri> for BoxedAppError {
 impl ErrorField {
     pub fn new(boxed_error: BoxedAppError) -> Self {
         Self(std::rc::Rc::new(boxed_error))
+    }
+}
+
+impl std::ops::Deref for ErrorField {
+    type Target = std::rc::Rc<BoxedAppError>;
+
+    fn deref(&self) -> &Self::Target {
+        &self.0
     }
 }
 
