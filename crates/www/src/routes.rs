@@ -8,19 +8,18 @@ fn build_view_routes(cfg: &mut ServiceConfig) {
 }
 
 fn build_greeting_routes(cfg: &mut ServiceConfig) {
+    cfg.service(resource("/greeting/hello2").to(crate::controllers::greeting::hello2));
+
+    cfg.service(resource("/greeting/hello3").to(crate::controllers::greeting::hello3));
+
     cfg.service(
-        scope("/greeting")
-            .wrap(crate::middlewares::demo::SayHi) // Third one.
+        scope("/greeting") // Third one.
             .wrap(crate::middlewares::prerequisites::RequireJson) // Second one.
             .wrap(crate::middlewares::extensions::ExtensionDistributeCache) // First middleware.
             .service((
                 resource("/hello").to(crate::controllers::greeting::hello),
                 resource("/hello4").to(crate::controllers::greeting::hello4),
             )),
-    );
-
-    cfg.service(
-        scope("/greeting").service((crate::controllers::greeting::hello2, crate::controllers::greeting::hello3)),
     );
 }
 
