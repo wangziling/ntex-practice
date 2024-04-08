@@ -38,7 +38,7 @@ pub mod route_prelude {
 }
 
 pub mod middleware_prelude {
-    pub use crate::error::anyhow_error;
+    pub use crate::error::{anyhow_error, BoxedAppError, ErrorField};
     pub use crate::features::{HttpRequestExt, RequestUtils, UriUtils};
     pub use crate::prelude::*;
     pub use crate::response::{map_view_render_result, ResponseStatus, ServerResponse};
@@ -48,12 +48,13 @@ pub mod middleware_prelude {
     pub use crate::server_response_warning;
     pub use crate::utils::{query_to_string, remove_query, update_query, update_query_map};
 
+    pub use ntex::http::{Method, StatusCode};
     pub use ntex::service::{Middleware, Service, ServiceCtx};
     pub use ntex::web::{Error, ErrorRenderer, WebRequest, WebResponse};
 }
 
 pub mod handler_prelude {
-    pub use crate::error::{anyhow_error, AppResult};
+    pub use crate::error::{anyhow_error, AppResult, ErrorField};
     pub use crate::features::{HttpRequestExt, RequestUtils, UriUtils};
     pub use crate::prelude::*;
     pub use crate::response::{map_view_render_result, ResponseStatus, ServerResponse};
