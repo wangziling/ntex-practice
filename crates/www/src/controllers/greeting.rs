@@ -13,7 +13,7 @@ pub async fn hello(req: HttpRequest, state: State<crate::app::AppState>) -> AppR
         .get::<DistributeCacheExtension>()
         .ok_or_else(|| crate::error::ExtensionError::DistributeCacheMissing.into_app_error())?;
 
-    let _test_val = distribute_cache.get::<RedisValue, _>("test").await?.into_string();
+    let _test_val = distribute_cache.get::<Option<String>, _>("test").await?;
 
     info!("Ip: {}, Port: {}", state.config.ip, state.config.port);
 
