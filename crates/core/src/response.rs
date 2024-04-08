@@ -2,8 +2,19 @@ use serde::Serialize;
 
 use crate::error::{AppResult, BoxedAppError};
 
+pub struct OriginalUrl(String);
+
+impl std::ops::Deref for OriginalUrl {
+    type Target = String;
+
+    fn deref(&self) -> &Self::Target {
+        &self.0
+    }
+}
+
 pub fn redirect<U: AsRef<str>>(
     url: U,
+    prev_url: Option<String>,
     status_code: Option<ntex::http::StatusCode>,
 ) -> AppResult<ntex::web::HttpResponse> {
     let mut response = ntex::web::HttpResponse::new(status_code.unwrap_or_else(|| ntex::http::StatusCode::FOUND));
@@ -12,6 +23,10 @@ pub fn redirect<U: AsRef<str>>(
         ntex::http::header::LOCATION,
         url.as_ref().parse::<ntex::http::header::HeaderValue>().map_err(Into::<BoxedAppError>::into)?,
     );
+
+    if prev_url.is_some() {
+        response.extensions_mut().insert(OriginalUrl(prev_url.unwrap()));
+    }
 
     Ok(response)
 }
@@ -194,10 +209,26 @@ macro_rules! server_response_warning {
 #[macro_export]
 macro_rules! server_redirect {
     ($url: expr) => {
-        $crate::response::redirect($url, None)
+        $crate::response::redirect($url, None, None)
     };
 
-    ($url: expr, $status_code: expr) => {
-        $crate::response::redirect($url, $status_code)
+    ($url: expr, $prev_url: expr) => {
+        $crate::response::redirect($url, $prev_url, None)
+    };
+
+    ($url: expr, $prev_url: expr, $status_code: expr) => {
+        $crate::response::redirect($url, $prev_url, $status_code)
+    };
+
+    ($url: expr, prev_url:$prev_url: expr) => {
+        $crate::server_redirect!($url, $prev_url, None)
+    };
+
+    ($url: expr, status_code:$status_code: expr) => {
+        $crate::server_redirect!($url, None, $status_code)
+    };
+
+    ($url: expr, prev_url:$prev_url: expr, status_code:$status_code: expr) => {
+        $crate::server_redirect!($url, $prev_url, $status_code)
     };
 }
