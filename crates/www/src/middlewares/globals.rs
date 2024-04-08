@@ -76,12 +76,12 @@ where
                                 .map_err(Into::<BoxedAppError>::into)?;
 
                             match query_to_string(query_map) {
-                                Ok(query_map_string) => {
+                                Ok(query_map_string) if !query_map_string.is_empty() => {
                                     *res.response_mut() = server_redirect!(uri.path().to_string() + "?" + &query_map_string, prev_url: Some(req.uri().to_string()))?;
 
                                     return Ok(res);
                                 }
-                                Err(_) => {}
+                                _ => {}
                             }
                         }
                         _ => {}
