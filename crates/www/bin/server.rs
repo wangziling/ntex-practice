@@ -11,11 +11,11 @@ async fn main() -> Result<()> {
 
     ntex::web::HttpServer::new(move || {
         ntex::web::App::new()
+            .wrap(web_www::middlewares::globals::Centralization)
             .wrap(ntex::web::middleware::Compress::default())
             .wrap(ntex::web::middleware::DefaultHeaders::new().header("X-Powered-By", "ntex-rs"))
             .state(web_www::app::AppState(app.clone()))
             .configure(web_www::routes::build_routes)
-            .default_service(web_www::routes::fallback_service())
     })
     .bind(server_bind)?
     .run()
