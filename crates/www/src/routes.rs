@@ -5,6 +5,9 @@ fn build_view_routes(cfg: &mut ServiceConfig) {
 
     // 404 - Only Get.
     cfg.service(resource("/404").route(get().to(crate::controllers::views::not_found)));
+
+    // 500 - Only Get.
+    cfg.service(resource("/500").route(get().to(crate::controllers::views::internal_server_error)));
 }
 
 fn build_greeting_routes(cfg: &mut ServiceConfig) {
