@@ -41,7 +41,7 @@ where
                 }
 
                 if !req.derived_from_ajax() {
-                    let new_res = server_redirect!("/500")?;
+                    let new_res = server_redirect!("/500", prev_url: Some(req.uri().to_string()))?;
 
                     {
                         let extensions = res.response().extensions();
@@ -77,8 +77,7 @@ where
 
                             match query_to_string(query_map) {
                                 Ok(query_map_string) => {
-                                    *res.response_mut() =
-                                        server_redirect!(uri.path().to_string() + "?" + &query_map_string)?;
+                                    *res.response_mut() = server_redirect!(uri.path().to_string() + "?" + &query_map_string, prev_url: Some(req.uri().to_string()))?;
 
                                     return Ok(res);
                                 }
@@ -88,7 +87,8 @@ where
                         _ => {}
                     }
 
-                    *res.response_mut() = server_redirect!(uri.path().to_string())?;
+                    *res.response_mut() =
+                        server_redirect!(uri.path().to_string(), prev_url: Some(req.uri().to_string()))?;
 
                     return Ok(res);
                 }
