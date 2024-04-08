@@ -1,13 +1,13 @@
 #[macro_export]
 macro_rules! __server_response_impl {
     ($type: ident) => {
-        $crate::response::ServerResponse::<String, String>::$type(None, None, Option::<&'static str>::None)
+        $crate::response::ServerResponse::<String, String>::$type(None, None, Option::<u16>::None)
     };
     ($type: ident, $data: expr) => {
-        $crate::response::ServerResponse::$type($data, Option::<String>::None, Option::<&'static str>::None)
+        $crate::response::ServerResponse::$type($data, Option::<String>::None, Option::<u16>::None)
     };
     ($type: ident, $data: expr, $message: expr) => {
-        $crate::response::ServerResponse::$type($data, $message, Option::<&'static str>::None)
+        $crate::response::ServerResponse::$type($data, $message, Option::<u16>::None)
     };
     ($type: ident, $data: expr, $message: expr, $status_code: expr) => {
         $crate::response::ServerResponse::$type($data, $message, $status_code)
