@@ -12,6 +12,11 @@ async fn main() -> Result<()> {
     ntex::web::HttpServer::new(move || {
         ntex::web::App::new()
             .wrap(web_www::middlewares::globals::Centralization)
+            .wrap(
+                web_www::middlewares::globals::NormalizeReqPath::default()
+                    .use_tailing_slash_operation()
+                    .set_tailing_slash_redirect(true),
+            )
             .wrap(ntex::web::middleware::Compress::default())
             .wrap(ntex::web::middleware::DefaultHeaders::new().header("X-Powered-By", "ntex-rs"))
             .state(web_www::app::AppState(app.clone()))
