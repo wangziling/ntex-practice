@@ -111,14 +111,14 @@ pub enum NormalizeReqPathTailingSlashMode {
 }
 
 pub struct NormalizeReqPath {
-    tailing_slash_mode: NormalizeReqPathTailingSlashMode,
+    tailing_slash_mode: std::rc::Rc<NormalizeReqPathTailingSlashMode>,
 }
 
 impl<S> Middleware<S> for NormalizeReqPath {
     type Service = NormalizeReqPathInner<S>;
 
     fn create(&self, service: S) -> Self::Service {
-        NormalizeReqPathInner { service, tailing_slash_mode: Default::default() }
+        NormalizeReqPathInner { service, tailing_slash_mode: self.tailing_slash_mode.clone() }
     }
 }
 
@@ -130,7 +130,7 @@ impl Default for NormalizeReqPath {
 
 pub struct NormalizeReqPathInner<S> {
     service: S,
-    tailing_slash_mode: NormalizeReqPathTailingSlashMode,
+    tailing_slash_mode: std::rc::Rc<NormalizeReqPathTailingSlashMode>,
 }
 
 impl<S, Err> Service<WebRequest<Err>> for NormalizeReqPathInner<S>
@@ -173,13 +173,20 @@ where
 
 macro_rules! __normalize_req_path_impl {
     () => {
+        fn wrap_tailing_slash_mode(
+            mode: NormalizeReqPathTailingSlashMode,
+        ) -> std::rc::Rc<NormalizeReqPathTailingSlashMode> {
+            std::rc::Rc::new(mode)
+        }
+
         pub fn use_tailing_slash_operation(mut self) -> Self {
-            match self.tailing_slash_mode {
+            match *self.tailing_slash_mode.as_ref() {
                 NormalizeReqPathTailingSlashMode::LetItGo => {
-                    self.tailing_slash_mode = NormalizeReqPathTailingSlashMode::NeedOperation {
-                        use_redirect: false,
-                        tailing_slash_redirect_status: None,
-                    };
+                    self.tailing_slash_mode =
+                        Self::wrap_tailing_slash_mode(NormalizeReqPathTailingSlashMode::NeedOperation {
+                            use_redirect: false,
+                            tailing_slash_redirect_status: None,
+                        });
                 }
 
                 _ => {}
@@ -189,7 +196,7 @@ macro_rules! __normalize_req_path_impl {
         }
 
         pub fn set_tailing_slash_redirect(mut self, use_redirect: bool) -> Self {
-            self.tailing_slash_mode = match self.tailing_slash_mode {
+            self.tailing_slash_mode = Self::wrap_tailing_slash_mode(match *self.tailing_slash_mode.as_ref() {
                 NormalizeReqPathTailingSlashMode::LetItGo => NormalizeReqPathTailingSlashMode::NeedOperation {
                     use_redirect,
                     tailing_slash_redirect_status: None,
@@ -197,7 +204,7 @@ macro_rules! __normalize_req_path_impl {
                 NormalizeReqPathTailingSlashMode::NeedOperation { tailing_slash_redirect_status, .. } => {
                     NormalizeReqPathTailingSlashMode::NeedOperation { use_redirect, tailing_slash_redirect_status }
                 }
-            };
+            });
 
             self
         }
@@ -208,18 +215,18 @@ macro_rules! __normalize_req_path_impl {
         ) -> Self {
             match TryInto::<StatusCode>::try_into(tailing_slash_redirect_status).ok() {
                 Some(tailing_slash_redirect_status) => {
-                    self.tailing_slash_mode = match self.tailing_slash_mode {
+                    self.tailing_slash_mode = Self::wrap_tailing_slash_mode(match *self.tailing_slash_mode.as_ref() {
                         NormalizeReqPathTailingSlashMode::LetItGo => NormalizeReqPathTailingSlashMode::NeedOperation {
                             use_redirect: true,
                             tailing_slash_redirect_status: Some(tailing_slash_redirect_status),
                         },
-                        NormalizeReqPathTailingSlashMode::NeedOperation { tailing_slash_redirect_status, .. } => {
+                        NormalizeReqPathTailingSlashMode::NeedOperation { use_redirect, .. } => {
                             NormalizeReqPathTailingSlashMode::NeedOperation {
-                                use_redirect: false,
-                                tailing_slash_redirect_status,
+                                use_redirect,
+                                tailing_slash_redirect_status: Some(tailing_slash_redirect_status),
                             }
                         }
-                    };
+                    });
                 }
 
                 _ => {}
@@ -229,21 +236,21 @@ macro_rules! __normalize_req_path_impl {
         }
 
         pub fn tailing_slash_operation_enabled(&self) -> bool {
-            match self.tailing_slash_mode {
+            match *self.tailing_slash_mode.as_ref() {
                 NormalizeReqPathTailingSlashMode::LetItGo => false,
                 _ => true,
             }
         }
 
         pub fn tailing_slash_redirect(&self) -> bool {
-            match self.tailing_slash_mode {
+            match *self.tailing_slash_mode.as_ref() {
                 NormalizeReqPathTailingSlashMode::NeedOperation { use_redirect, .. } => use_redirect,
                 _ => false,
             }
         }
 
         pub fn tailing_slash_redirect_status(&self) -> Option<StatusCode> {
-            match self.tailing_slash_mode {
+            match *self.tailing_slash_mode.as_ref() {
                 NormalizeReqPathTailingSlashMode::NeedOperation { tailing_slash_redirect_status, .. } => {
                     tailing_slash_redirect_status
                 }

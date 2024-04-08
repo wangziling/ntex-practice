@@ -15,7 +15,8 @@ async fn main() -> Result<()> {
             .wrap(
                 web_www::middlewares::globals::NormalizeReqPath::default()
                     .use_tailing_slash_operation()
-                    .set_tailing_slash_redirect(true),
+                    .set_tailing_slash_redirect(true)
+                    .set_tailing_slash_redirect_status(301),
             )
             .wrap(ntex::web::middleware::Compress::default())
             .wrap(ntex::web::middleware::DefaultHeaders::new().header("X-Powered-By", "ntex-rs"))
