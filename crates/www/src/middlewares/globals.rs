@@ -144,7 +144,7 @@ where
     ntex::forward_poll_ready!(service);
 
     async fn call(&self, mut req: WebRequest<Err>, ctx: ServiceCtx<'_, Self>) -> Result<Self::Response, Self::Error> {
-        {
+        if self.tailing_slash_operation_enabled() {
             let head_mut = req.match_info_mut();
             let uri = head_mut.get_ref();
             let path = uri.path();
@@ -163,7 +163,7 @@ where
                 }
 
                 head_mut.set(transformed_url.parse::<ntex::http::Uri>().map_err(Into::<BoxedAppError>::into)?);
-                req.head_mut().extensions_mut().insert(OriginalUrl::new(origin_uri_string))
+                req.head_mut().extensions_mut().insert(OriginalUrl::new(origin_uri_string));
             }
         }
 
@@ -226,6 +226,13 @@ macro_rules! __normalize_req_path_impl {
             }
 
             self
+        }
+
+        pub fn tailing_slash_operation_enabled(&self) -> bool {
+            match self.tailing_slash_mode {
+                NormalizeReqPathTailingSlashMode::LetItGo => false,
+                _ => true,
+            }
         }
 
         pub fn tailing_slash_redirect(&self) -> bool {
