@@ -21,7 +21,7 @@ macro_rules! error_impl {
         impl WebResponseError for $ident {
             fn error_response(&self, req: &ntex::web::HttpRequest) -> ntex::http::Response {
                 if req.wants_json() {
-                    return server_response_failed!(message: Some(self.to_string())).into();
+                    return server_response_failed!(message: self.to_string()).into();
                 }
 
                 return self.response();
@@ -45,7 +45,7 @@ macro_rules! error_impl {
 
             fn error_response(&self, req: &ntex::web::HttpRequest) -> ntex::http::Response {
                 if req.wants_json() {
-                    return server_response_failed!(message: Some(self.to_string())).into();
+                    return server_response_failed!(message: self.to_string()).into();
                 }
 
                 return self.response();

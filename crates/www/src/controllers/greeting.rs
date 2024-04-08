@@ -26,9 +26,9 @@ pub async fn hello2(_state: State<crate::app::AppState>) -> AppResult<impl Respo
 }
 
 pub async fn hello3(_state: State<crate::app::AppState>) -> AppResult<impl Responder> {
-    Ok(server_response_success!(status_code: 300.try_into().ok()))
+    Ok(server_response_success!(status_code: 300))
 }
 
 pub async fn hello4(_state: State<crate::app::AppState>) -> AppResult<impl Responder> {
-    Ok(server_response_success!(status_code: 401.try_into().ok()))
+    Ok(server_response_success!(status_code: 401))
 }

@@ -35,13 +35,14 @@ where
         match res.status() {
             StatusCode::INTERNAL_SERVER_ERROR if !req.path().eq("/500") => {
                 if req.wants_json() {
-                    *res.response_mut() = server_response_failed!(message: Some("Internal Server Error."), status_code: 500.try_into().ok()).into();
+                    *res.response_mut() =
+                        server_response_failed!(message: "Internal Server Error.", status_code: 500).into();
 
                     return Ok(res);
                 }
 
                 if !req.derived_from_ajax() {
-                    let new_res = server_redirect!("/500", prev_url: Some(req.uri().to_string()))?;
+                    let new_res = server_redirect!("/500", prev_url: req.uri().to_string())?;
 
                     {
                         let extensions = res.response().extensions();
@@ -59,8 +60,8 @@ where
             }
             StatusCode::NOT_FOUND if !req.path().eq("/404") => {
                 if req.wants_json() {
-                    *res.response_mut() = server_response_failed!(message: Some("Requested resource not found."), status_code: 404.try_into().ok())
-                    .into();
+                    *res.response_mut() =
+                        server_response_failed!(message: "Requested resource not found.", status_code: 404).into();
 
                     return Ok(res);
                 }
@@ -77,7 +78,7 @@ where
 
                             match query_to_string(query_map) {
                                 Ok(query_map_string) if !query_map_string.is_empty() => {
-                                    *res.response_mut() = server_redirect!(uri.path().to_string() + "?" + &query_map_string, prev_url: Some(req.uri().to_string()))?;
+                                    *res.response_mut() = server_redirect!(uri.path().to_string() + "?" + &query_map_string, prev_url: req.uri().to_string())?;
 
                                     return Ok(res);
                                 }
@@ -87,8 +88,7 @@ where
                         _ => {}
                     }
 
-                    *res.response_mut() =
-                        server_redirect!(uri.path().to_string(), prev_url: Some(req.uri().to_string()))?;
+                    *res.response_mut() = server_redirect!(uri.path().to_string(), prev_url: req.uri().to_string())?;
 
                     return Ok(res);
                 }
@@ -159,7 +159,7 @@ where
                 };
 
                 if self.tailing_slash_redirect() {
-                    return Ok(server_redirect!(transformed_url, prev_url: Some(origin_uri_string), status_code: self.tailing_slash_redirect_status())?.into_web_response(req));
+                    return Ok(server_redirect!(transformed_url, prev_url: origin_uri_string, optional_status_code: self.tailing_slash_redirect_status())?.into_web_response(req));
                 }
 
                 head_mut.set(transformed_url.parse::<ntex::http::Uri>().map_err(Into::<BoxedAppError>::into)?);
