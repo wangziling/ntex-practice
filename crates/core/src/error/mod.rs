@@ -1,4 +1,5 @@
 pub mod redis;
+pub mod regex;
 
 #[derive(Clone, Debug)]
 pub struct ErrorField(std::rc::Rc<BoxedAppError>);
