@@ -7,13 +7,14 @@ struct HelloWorld {
 }
 
 // #[instrument(skip_all)]
-pub async fn hello(req: HttpRequest, state: State<crate::app::AppState>) -> AppResult<&'static str> {
-    let extensions = req.extensions();
-    let distribute_cache = extensions
-        .get::<DistributeCacheExtension>()
-        .ok_or_else(|| crate::error::ExtensionError::DistributeCacheMissing.into_app_error())?;
+pub async fn hello(_req: HttpRequest, state: State<crate::app::AppState>) -> AppResult<&'static str> {
+    // let extensions = req.extensions();
+    // let distribute_cache = extensions
+    //     .get::<DistributeCacheExtension>()
+    //     .ok_or_else(|| crate::error::ExtensionError::DistributeCacheMissing.into_app_error())?;
+    // let _test_val = distribute_cache.get::<Option<String>, _>("test").await?;
 
-    let _test_val = distribute_cache.get::<Option<String>, _>("test").await?;
+    let _test_val = state.distribute_cache.get::<Option<String>, _>("test").await?;
 
     info!("Ip: {}, Port: {}", state.config.ip, state.config.port);
 

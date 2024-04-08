@@ -1,4 +1,3 @@
-#[cfg(feature = "enable-redis")]
 pub mod redis;
 
 #[derive(Clone, Debug)]

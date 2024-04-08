@@ -17,8 +17,4 @@ serde.workspace = true
 serde_json.workspace = true
 sailfish.workspace = true
 serde_urlencoded.workspace = true
-fred = { workspace = true, optional = true }
-
-[features]
-default = ["enable-redis"]
-enable-redis = ["dep:fred"]
+fred.workspace = true
