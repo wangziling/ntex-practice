@@ -353,3 +353,80 @@ macro_rules! server_redirect {
         $crate::server_redirect!($url, $prev_url, $status_code)
     };
 }
+
+#[cfg(test)]
+mod macro_tests {
+    #![allow(unused_doc_comments)]
+
+    use crate::*;
+
+    macro_rules! __server_response_test_impl {
+        ($type: ident) => {
+            paste::item! {
+                #[test]
+                fn [<server_response_ $type>] () {
+                    let _ = [<server_response_ $type>]!();
+                    let _ = [<server_response_ $type>]!(/** data */Option::<String>::None);
+                    let _ = [<server_response_ $type>]!(/** data */Some(""));
+                    let _ = [<server_response_ $type>]!(/** data */Some(""), /** message */Option::<String>::None);
+                    let _ = [<server_response_ $type>]!(/** data */Some(""), /** message */Some(""));
+                    let _ = [<server_response_ $type>]!(/** data */Some(""), /** message */Option::<String>::None, /** status_code */Option::<u16>::None);
+                    let _ = [<server_response_ $type>]!(/** data */Some(""), /** message */Some(""), /** status_code */Some(404));
+
+                    // Named.
+                    let _ = [<server_response_ $type>]!(data: "");
+                    let _ = [<server_response_ $type>]!(data: "", message: "");
+                    let _ = [<server_response_ $type>]!(data: "", message: "", status_code: 404);
+                    let _ = [<server_response_ $type>]!(data: "", message: "", status_code: ntex::http::StatusCode::NOT_FOUND);
+                    let _ = [<server_response_ $type>]!(message: "");
+                    let _ = [<server_response_ $type>]!(message: "", status_code: 404);
+                    let _ = [<server_response_ $type>]!(message: "", status_code: ntex::http::StatusCode::NOT_FOUND);
+                    let _ = [<server_response_ $type>]!(status_code: 404);
+                    let _ = [<server_response_ $type>]!(status_code: ntex::http::StatusCode::NOT_FOUND);
+
+                    // Optional.
+                    let _ = [<server_response_ $type>]!(optional_data: Option::<String>::None);
+                    let _ = [<server_response_ $type>]!(optional_data: Some(""));
+                    let _ =
+                        [<server_response_ $type>]!(optional_data: Option::<String>::None, optional_message: Option::<String>::None);
+                    let _ = [<server_response_ $type>]!(optional_data: Some(""), optional_message: Some(""));
+                    let _ = [<server_response_ $type>]!(optional_data: Option::<String>::None, optional_message: Option::<String>::None, optional_status_code: Option::<u16>::None);
+                    let _ = [<server_response_ $type>]!(optional_data: Some(""), optional_message: Some(""), optional_status_code: Some(404));
+                }
+            }
+        };
+    }
+
+    #[test]
+    fn server_redirect() {
+        let _ = server_redirect!(/** url */"");
+        let _ = server_redirect!(/** url */"", /** prev_url */Some("".to_string()));
+        let _ = server_redirect!(/** url */"", /** prev_url */Some("".to_string()), /** status_code */Some(404));
+
+        // Named.
+        let _ = server_redirect!(/** url */"", prev_url: "".to_string());
+        let _ = server_redirect!(/** url */"", status_code: 404);
+        let _ = server_redirect!(/** url */"", status_code: ntex::http::StatusCode::NOT_FOUND);
+        let _ = server_redirect!(/** url */"", prev_url: "".to_string(), status_code: 404);
+        let _ =
+            server_redirect!(/** url */"", prev_url: "".to_string(), status_code: ntex::http::StatusCode::NOT_FOUND);
+
+        // Optional.
+        let _ = server_redirect!(/** url */"", optional_prev_url: None);
+        let _ = server_redirect!(/** url */"", optional_prev_url: Some("".to_string()));
+        let _ = server_redirect!(/** url */"", optional_status_code: Option::<u16>::None);
+        let _ = server_redirect!(/** url */"", optional_status_code: Some(404));
+        let _ = server_redirect!(/** url */"", optional_status_code: Some(ntex::http::StatusCode::NOT_FOUND));
+        let _ = server_redirect!(/** url */"", optional_prev_url: None, optional_status_code: Option::<u16>::None);
+        let _ = server_redirect!(/** url */"", optional_prev_url: Some("".to_string()), optional_status_code: Option::<u16>::None);
+        let _ = server_redirect!(/** url */"", optional_prev_url: None, optional_status_code: Some(404));
+        let _ =
+            server_redirect!(/** url */"", optional_prev_url: Some("".to_string()), optional_status_code: Some(404));
+        let _ = server_redirect!(/** url */"", optional_prev_url: None, optional_status_code: Some(ntex::http::StatusCode::NOT_FOUND));
+        let _ = server_redirect!(/** url */"", optional_prev_url: Some("".to_string()), optional_status_code: Some(ntex::http::StatusCode::NOT_FOUND));
+    }
+
+    __server_response_test_impl!(success);
+    __server_response_test_impl!(failed);
+    __server_response_test_impl!(warning);
+}
