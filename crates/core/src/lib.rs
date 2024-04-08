@@ -36,7 +36,7 @@ pub mod middleware_prelude {
     pub use crate::error::{anyhow_error, BoxedAppError, ErrorField};
     pub use crate::features::{HttpRequestExt, RequestUtils, UriUtils};
     pub use crate::prelude::*;
-    pub use crate::response::{map_view_render_result, OriginalUrl, ResponseStatus, ServerResponse};
+    pub use crate::response::{map_view_render_result, HttpResponseExt, OriginalUrl, ResponseStatus, ServerResponse};
     pub use crate::server_redirect;
     pub use crate::server_response_failed;
     pub use crate::server_response_success;
@@ -52,7 +52,7 @@ pub mod handler_prelude {
     pub use crate::error::{anyhow_error, AppResult, ErrorField};
     pub use crate::features::{HttpRequestExt, RequestUtils, UriUtils};
     pub use crate::prelude::*;
-    pub use crate::response::{map_view_render_result, OriginalUrl, ResponseStatus, ServerResponse};
+    pub use crate::response::{map_view_render_result, HttpResponseExt, OriginalUrl, ResponseStatus, ServerResponse};
     pub use crate::server_redirect;
     pub use crate::server_response_failed;
     pub use crate::server_response_success;

@@ -4,6 +4,12 @@ use crate::error::{AppResult, BoxedAppError};
 
 pub struct OriginalUrl(String);
 
+impl OriginalUrl {
+    pub fn new(inner: String) -> Self {
+        Self(inner)
+    }
+}
+
 impl std::ops::Deref for OriginalUrl {
     type Target = String;
 
@@ -33,6 +39,16 @@ pub fn redirect<U: AsRef<str>>(
 
 pub fn map_view_render_result(s: String) -> ntex::web::HttpResponse {
     ntex::web::HttpResponse::with_body(ntex::http::StatusCode::OK, s.into())
+}
+
+pub trait HttpResponseExt<Err> {
+    fn into_web_response(self, req: ntex::web::WebRequest<Err>) -> ntex::web::WebResponse;
+}
+
+impl<Err: ntex::web::ErrorRenderer> HttpResponseExt<Err> for ntex::web::HttpResponse {
+    fn into_web_response(self, req: ntex::web::WebRequest<Err>) -> ntex::web::WebResponse {
+        ntex::web::WebResponse::new(self, req.into_parts().0)
+    }
 }
 
 #[derive(Serialize, Default)]
