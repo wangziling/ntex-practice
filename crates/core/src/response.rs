@@ -18,12 +18,14 @@ impl std::ops::Deref for OriginalUrl {
     }
 }
 
-pub fn redirect<U: AsRef<str>>(
+pub fn redirect<U: AsRef<str>, S: TryInto<ntex::http::StatusCode>>(
     url: U,
     prev_url: Option<String>,
-    status_code: Option<ntex::http::StatusCode>,
+    status_code: Option<S>,
 ) -> AppResult<ntex::web::HttpResponse> {
-    let mut response = ntex::web::HttpResponse::new(status_code.unwrap_or_else(|| ntex::http::StatusCode::FOUND));
+    let mut response = ntex::web::HttpResponse::new(
+        status_code.and_then(crate::utils::parse_into_status_code).unwrap_or_else(|| ntex::http::StatusCode::FOUND),
+    );
 
     response.headers_mut().insert(
         ntex::http::header::LOCATION,
@@ -76,32 +78,47 @@ where
     M: AsRef<str> + Serialize,
 {
     #[inline]
-    pub fn failed(data: Option<D>, message: Option<M>, status_code: Option<ntex::http::StatusCode>) -> Self {
+    pub fn failed<S>(data: Option<D>, message: Option<M>, status_code: Option<S>) -> Self
+    where
+        S: TryInto<ntex::http::StatusCode>,
+    {
         Self {
             status: ResponseStatus::Failed,
             message,
             data,
-            status_code: status_code.unwrap_or_else(|| ntex::http::StatusCode::OK),
+            status_code: status_code
+                .and_then(crate::utils::parse_into_status_code)
+                .unwrap_or_else(|| ntex::http::StatusCode::OK),
         }
     }
 
     #[inline]
-    pub fn success(data: Option<D>, message: Option<M>, status_code: Option<ntex::http::StatusCode>) -> Self {
+    pub fn success<S>(data: Option<D>, message: Option<M>, status_code: Option<S>) -> Self
+    where
+        S: TryInto<ntex::http::StatusCode>,
+    {
         Self {
             status: ResponseStatus::Success,
             message,
             data,
-            status_code: status_code.unwrap_or_else(|| ntex::http::StatusCode::OK),
+            status_code: status_code
+                .and_then(crate::utils::parse_into_status_code)
+                .unwrap_or_else(|| ntex::http::StatusCode::OK),
         }
     }
 
     #[inline]
-    pub fn warning(data: Option<D>, message: Option<M>, status_code: Option<ntex::http::StatusCode>) -> Self {
+    pub fn warning<S>(data: Option<D>, message: Option<M>, status_code: Option<S>) -> Self
+    where
+        S: TryInto<ntex::http::StatusCode>,
+    {
         Self {
             status: ResponseStatus::Warning,
             message,
             data,
-            status_code: status_code.unwrap_or_else(|| ntex::http::StatusCode::OK),
+            status_code: status_code
+                .and_then(crate::utils::parse_into_status_code)
+                .unwrap_or_else(|| ntex::http::StatusCode::OK),
         }
     }
 }
@@ -134,21 +151,48 @@ macro_rules! server_response_failed {
 
     // Named.
     (data: $data: expr) => {
-        $crate::__server_response_impl!(failed, $data)
+        $crate::__server_response_impl!(failed, Some($data))
     };
     (message: $message: expr) => {
-        $crate::__server_response_impl!(failed, Option::<String>::None, $message)
+        $crate::__server_response_impl!(failed, Option::<String>::None, Some($message))
     };
     (status_code: $status_code: expr) => {
-        $crate::__server_response_impl!(failed, Option::<String>::None, Option::<String>::None, $status_code)
+        $crate::__server_response_impl!(failed, Option::<String>::None, Option::<String>::None, Some($status_code))
     };
     (data: $data: expr, status_code: $status_code: expr) => {
-        $crate::__server_response_impl!(failed, $data, Option::<String>::None, $status_code)
+        $crate::__server_response_impl!(failed, Some($data), Option::<String>::None, Some($status_code))
+    };
+    (data: $data: expr, message: $message: expr) => {
+        $crate::__server_response_impl!(failed, Some($data), Some($message))
     };
     (message: $message: expr, status_code: $status_code: expr) => {
-        $crate::__server_response_impl!(failed, Option::<String>::None, $message, $status_code)
+        $crate::__server_response_impl!(failed, Option::<String>::None, Some($message), Some($status_code))
     };
     (data: $data: expr, message: $message: expr, status_code: $status_code: expr) => {
+        $crate::__server_response_impl!(failed, Some($data), Some($message), Some($status_code))
+    };
+
+
+    // Optional.
+    (optional_data: $data: expr) => {
+        $crate::__server_response_impl!(failed, $data)
+    };
+    (optional_message: $message: expr) => {
+        $crate::__server_response_impl!(failed, Option::<String>::None, $message)
+    };
+    (optional_status_code: $status_code: expr) => {
+        $crate::__server_response_impl!(failed, Option::<String>::None, Option::<String>::None, $status_code)
+    };
+    (optional_data: $data: expr, optional_status_code: $status_code: expr) => {
+        $crate::__server_response_impl!(failed, $data, Option::<String>::None, $status_code)
+    };
+    (optional_data: $data: expr, optional_message: $optional_message: expr) => {
+        $crate::__server_response_impl!(failed, $data, $optional_message)
+    };
+    (optional_message: $message: expr, optional_status_code: $status_code: expr) => {
+        $crate::__server_response_impl!(failed, Option::<String>::None, $message, $status_code)
+    };
+    (optional_data: $data: expr, optional_message: $message: expr, optional_status_code: $status_code: expr) => {
         $crate::__server_response_impl!(failed, $data, $message, $status_code)
     };
 
@@ -166,21 +210,47 @@ macro_rules! server_response_success {
 
     // Named.
     (data: $data: expr) => {
-        $crate::__server_response_impl!(success, $data)
+        $crate::__server_response_impl!(success, Some($data))
     };
     (message: $message: expr) => {
-        $crate::__server_response_impl!(success, Option::<String>::None, $message)
+        $crate::__server_response_impl!(success, Option::<String>::None, Some($message))
     };
     (status_code: $status_code: expr) => {
-        $crate::__server_response_impl!(success, Option::<String>::None, Option::<String>::None, $status_code)
+        $crate::__server_response_impl!(success, Option::<String>::None, Option::<String>::None, Some($status_code))
     };
     (data: $data: expr, status_code: $status_code: expr) => {
-        $crate::__server_response_impl!(success, $data, Option::<String>::None, $status_code)
+        $crate::__server_response_impl!(success, Some($data), Option::<String>::None, Some($status_code))
+    };
+    (data: $data: expr, message: $message: expr) => {
+        $crate::__server_response_impl!(success, Some($data), Some($message))
     };
     (message: $message: expr, status_code: $status_code: expr) => {
-        $crate::__server_response_impl!(success, Option::<String>::None, $message, $status_code)
+        $crate::__server_response_impl!(success, Option::<String>::None, Some($message), Some($status_code))
     };
     (data: $data: expr, message: $message: expr, status_code: $status_code: expr) => {
+        $crate::__server_response_impl!(success, Some($data), Some($message), Some($status_code))
+    };
+
+    // Optional.
+    (optional_data: $data: expr) => {
+        $crate::__server_response_impl!(success, $data)
+    };
+    (optional_message: $message: expr) => {
+        $crate::__server_response_impl!(success, Option::<String>::None, $message)
+    };
+    (optional_status_code: $status_code: expr) => {
+        $crate::__server_response_impl!(success, Option::<String>::None, Option::<String>::None, $status_code)
+    };
+    (optional_data: $data: expr, optional_status_code: $status_code: expr) => {
+        $crate::__server_response_impl!(success, $data, Option::<String>::None, $status_code)
+    };
+    (optional_data: $data: expr, optional_message: $optional_message: expr) => {
+        $crate::__server_response_impl!(success, $data, $optional_message)
+    };
+    (optional_message: $message: expr, optional_status_code: $status_code: expr) => {
+        $crate::__server_response_impl!(success, Option::<String>::None, $message, $status_code)
+    };
+    (optional_data: $data: expr, optional_message: $message: expr, optional_status_code: $status_code: expr) => {
         $crate::__server_response_impl!(success, $data, $message, $status_code)
     };
 
@@ -198,21 +268,47 @@ macro_rules! server_response_warning {
 
     // Named.
     (data: $data: expr) => {
-        $crate::__server_response_impl!(warning, $data)
+        $crate::__server_response_impl!(warning, Some($data))
     };
     (message: $message: expr) => {
-        $crate::__server_response_impl!(warning, Option::<String>::None, $message)
+        $crate::__server_response_impl!(warning, Option::<String>::None, Some($message))
     };
     (status_code: $status_code: expr) => {
-        $crate::__server_response_impl!(warning, Option::<String>::None, Option::<String>::None, $status_code)
+        $crate::__server_response_impl!(warning, Option::<String>::None, Option::<String>::None, Some($status_code))
     };
     (data: $data: expr, status_code: $status_code: expr) => {
-        $crate::__server_response_impl!(warning, $data, Option::<String>::None, $status_code)
+        $crate::__server_response_impl!(warning, Some($data), Option::<String>::None, Some($status_code))
+    };
+    (data: $data: expr, message: $message: expr) => {
+        $crate::__server_response_impl!(warning, Some($data), Some($message))
     };
     (message: $message: expr, status_code: $status_code: expr) => {
-        $crate::__server_response_impl!(warning, Option::<String>::None, $message, $status_code)
+        $crate::__server_response_impl!(warning, Option::<String>::None, Some($message), Some($status_code))
     };
     (data: $data: expr, message: $message: expr, status_code: $status_code: expr) => {
+        $crate::__server_response_impl!(warning, Some($data), Some($message), Some($status_code))
+    };
+
+    // Optional.
+    (optional_data: $data: expr) => {
+        $crate::__server_response_impl!(warning, $data)
+    };
+    (optional_message: $message: expr) => {
+        $crate::__server_response_impl!(warning, Option::<String>::None, $message)
+    };
+    (optional_status_code: $status_code: expr) => {
+        $crate::__server_response_impl!(warning, Option::<String>::None, Option::<String>::None, $status_code)
+    };
+    (optional_data: $data: expr, optional_status_code: $status_code: expr) => {
+        $crate::__server_response_impl!(warning, $data, Option::<String>::None, $status_code)
+    };
+    (optional_data: $data: expr, optional_message: $optional_message: expr) => {
+        $crate::__server_response_impl!(warning, $data, $optional_message)
+    };
+    (optional_message: $message: expr, optional_status_code: $status_code: expr) => {
+        $crate::__server_response_impl!(warning, Option::<String>::None, $message, $status_code)
+    };
+    (optional_data: $data: expr, optional_message: $message: expr, optional_status_code: $status_code: expr) => {
         $crate::__server_response_impl!(warning, $data, $message, $status_code)
     };
 
@@ -225,26 +321,35 @@ macro_rules! server_response_warning {
 #[macro_export]
 macro_rules! server_redirect {
     ($url: expr) => {
-        $crate::response::redirect($url, None, None)
+        $crate::response::redirect($url, None, Option::<u16>::None)
     };
-
     ($url: expr, $prev_url: expr) => {
-        $crate::response::redirect($url, $prev_url, None)
+        $crate::response::redirect($url, $prev_url, Option::<u16>::None)
     };
-
     ($url: expr, $prev_url: expr, $status_code: expr) => {
         $crate::response::redirect($url, $prev_url, $status_code)
     };
-
     ($url: expr, prev_url:$prev_url: expr) => {
-        $crate::server_redirect!($url, $prev_url, None)
+        $crate::server_redirect!($url, Some($prev_url), Option::<u16>::None)
+    };
+    ($url: expr, status_code:$status_code: expr) => {
+        $crate::server_redirect!($url, None, Some($status_code))
+    };
+    ($url: expr, prev_url:$prev_url: expr, status_code:$status_code: expr) => {
+        $crate::server_redirect!($url, Some($prev_url), Some($status_code))
     };
 
-    ($url: expr, status_code:$status_code: expr) => {
+    // Optional.
+    ($url: expr, prev_url:$prev_url: expr, optional_status_code:$status_code: expr) => {
+        $crate::server_redirect!($url, Some($prev_url), $status_code)
+    };
+    ($url: expr, optional_status_code:$status_code: expr) => {
         $crate::server_redirect!($url, None, $status_code)
     };
-
-    ($url: expr, prev_url:$prev_url: expr, status_code:$status_code: expr) => {
+    ($url: expr, optional_prev_url:$prev_url: expr) => {
+        $crate::server_redirect!($url, $prev_url, Option::<u16>::None)
+    };
+    ($url: expr, optional_prev_url:$prev_url: expr, optional_status_code:$status_code: expr) => {
         $crate::server_redirect!($url, $prev_url, $status_code)
     };
 }

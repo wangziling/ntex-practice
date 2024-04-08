@@ -38,3 +38,10 @@ pub fn query_to_string(input: QueryMap) -> Result<String> {
 
     Ok(query_string)
 }
+
+pub fn parse_into_status_code<S>(status_code: S) -> Option<ntex::http::StatusCode>
+where
+    S: TryInto<ntex::http::StatusCode>,
+{
+    TryInto::<ntex::http::StatusCode>::try_into(status_code).ok()
+}
