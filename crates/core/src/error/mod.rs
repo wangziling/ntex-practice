@@ -159,8 +159,7 @@ impl AppError for InternalAppError {
     fn response(&self) -> ntex::web::HttpResponse {
         error!(error = %self, "Internal server error.");
 
-        let response = ntex::web::HttpResponse::new(ntex::http::StatusCode::INTERNAL_SERVER_ERROR)
-            .set_body("Internal server error.".into());
+        let response = ntex::web::HttpResponse::new(ntex::http::StatusCode::INTERNAL_SERVER_ERROR);
 
         response.extensions_mut().insert(ErrorField::new(self.clone().into()));
 
