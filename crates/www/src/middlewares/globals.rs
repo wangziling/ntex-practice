@@ -144,11 +144,16 @@ where
     ntex::forward_poll_ready!(service);
 
     async fn call(&self, mut req: WebRequest<Err>, ctx: ServiceCtx<'_, Self>) -> Result<Self::Response, Self::Error> {
-        if self.tailing_slash_operation_enabled() {
-            let head_mut = req.match_info_mut();
-            let uri = head_mut.get_ref();
-            let path = uri.path();
+        let head_mut = req.match_info_mut();
+        let uri = head_mut.get_ref();
+        let path = uri.path();
 
+        // The landing page.
+        if path.is_empty() || path == "/" {
+            return ctx.call(&self.service, req).await;
+        }
+
+        if self.tailing_slash_operation_enabled() {
             if path.ends_with("/") {
                 let origin_uri_string = uri.to_string();
                 let transformed_path = path.trim_end_matches("/");
