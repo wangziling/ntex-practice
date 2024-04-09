@@ -42,7 +42,23 @@ pub async fn hello2(state: State<crate::app::AppState>) -> AppResult<impl Respon
     Ok(server_response_success!(Some(HelloWorld { greeting: "你好，世界。" })))
 }
 
-pub async fn hello3(_state: State<crate::app::AppState>) -> AppResult<impl Responder> {
+pub async fn hello3(req: HttpRequest, state: State<crate::app::AppState>) -> AppResult<impl Responder> {
+    // Make sure that only one process here on concurrent env now.
+    // If you use `ab` bench tool to simulate concurrent request.
+    // E.g. `ab -n 50 -c 10 http://localhost:5000/greeting/hello3`
+    // Means concurrently request `hello3` with 10 client at the mean time and max requests are 500.
+    // You will see that each second, here will only be one "-----" and one "22222" log.
+    // Others requests are blocking.
+    state
+        .async_op_guard
+        .spawn("AAA".as_bytes(), 1000, async {
+            tokio::time::sleep(std::time::Duration::from_secs(1)).await;
+            info!(uri = %req.uri(), "-----------------");
+        })
+        .await;
+
+    info!("2222222222222");
+
     Ok(server_response_success!(status_code: 300))
 }
 

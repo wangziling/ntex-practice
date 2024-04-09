@@ -12,6 +12,7 @@ default-run = "server"
 web_core.workspace = true
 web_env.workspace = true
 web_cache.workspace = true
+web_guard.workspace = true
 ntex.workspace = true
 tracing.workspace = true
 tracing-subscriber.workspace = true
@@ -21,6 +22,7 @@ serde.workspace = true
 serde_json.workspace = true
 sailfish.workspace = true
 fred.workspace = true
+tokio.workspace = true
 
 [[bin]]
 name = "server"
