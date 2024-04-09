@@ -1,0 +1,15 @@
+[package]
+name = "web_cache"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+readme.workspace = true
+description.workspace = true
+license.workspace = true
+categories.workspace = true
+keywords.workspace = true
+
+[dependencies]
+tracing.workspace = true
+fred.workspace = true
+web_core.workspace = true

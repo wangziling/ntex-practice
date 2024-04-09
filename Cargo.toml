@@ -17,6 +17,7 @@ web_proc_macros = { path = "./crates/proc_macros" }
 web_core = { path = "./crates/core" }
 web_www = { path = "./crates/www" }
 web_env = { path = "./crates/env" }
+web_cache = { path = "./crates/cache" }
 ntex = { version = "1.2", features = [
   "tokio",
   "cookie",
