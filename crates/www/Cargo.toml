@@ -11,6 +11,7 @@ default-run = "server"
 [dependencies]
 web_core.workspace = true
 web_env.workspace = true
+web_cache.workspace = true
 ntex.workspace = true
 tracing.workspace = true
 tracing-subscriber.workspace = true

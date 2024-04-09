@@ -1,6 +1,6 @@
 use std::sync::Arc;
 
-use crate::cache::prelude::*;
+use web_cache::prelude::*;
 use web_core::middleware_prelude::*;
 
 pub struct ExtensionDistributeCache;

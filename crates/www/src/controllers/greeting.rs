@@ -1,4 +1,5 @@
-use crate::{cache::prelude::*, error::prelude::*};
+use crate::error::prelude::*;
+use web_cache::prelude::*;
 use web_core::handler_prelude::*;
 
 #[derive(Serialize)]

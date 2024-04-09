@@ -3,7 +3,7 @@ use web_core::prelude::*;
 mod distribute;
 
 pub mod prelude {
-    pub use crate::cache::distribute::{
+    pub use web_cache::distribute::{
         prelude::*, DistributeCache, DistributeCacheConfig, DistributeCacheExtension, DistributeCacheGlobal,
         DistributeCacheKey,
     };

@@ -11,6 +11,5 @@ pub mod middlewares;
 pub mod routes;
 pub mod utils;
 
-mod cache;
 mod controllers;
 mod error;

@@ -1,5 +1,5 @@
-use crate::cache::prelude::*;
 use std::net::{IpAddr, Ipv4Addr};
+use web_cache::prelude::*;
 use web_core::prelude::*;
 
 #[derive(Clone)]
