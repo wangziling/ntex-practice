@@ -18,6 +18,7 @@ web_core = { path = "./crates/core" }
 web_www = { path = "./crates/www" }
 web_env = { path = "./crates/env" }
 web_cache = { path = "./crates/cache" }
+web_guard = { path = "./crates/guard" }
 ntex = { version = "1.2", features = [
   "tokio",
   "cookie",
@@ -42,3 +43,4 @@ fred = { version = "8.0", features = ["partial-tracing", "serde-json"] }
 regex = { version = "1.10" }
 moka = { version = "0.12.1", features = ["future"] }
 tokio = { version = "1.37", features = ["sync"] }
+rslock = { version = "0.3", features = ["tokio-comp"] }
