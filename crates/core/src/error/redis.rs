@@ -2,7 +2,7 @@ use super::{server_error_response, AppError, BoxedAppError};
 
 #[derive(Debug)]
 struct RedisError {
-    error: fred::error::RedisError,
+    pub error: fred::error::RedisError,
 }
 
 impl AppError for RedisError {

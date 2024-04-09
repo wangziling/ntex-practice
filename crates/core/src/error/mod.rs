@@ -1,5 +1,11 @@
+pub mod impls;
+pub mod internal_error;
 pub mod redis;
 pub mod regex;
+pub mod view_template;
+
+pub use internal_error::internal_app_error;
+use internal_error::InternalAppError;
 
 #[derive(Clone, Debug)]
 pub struct ErrorField(std::rc::Rc<BoxedAppError>);
@@ -50,74 +56,17 @@ impl ntex::web::Responder for BoxedAppError {
     }
 }
 
+impl ntex::web::WebResponseError for BoxedAppError {
+    fn error_response(&self, _: &ntex::web::HttpRequest) -> ntex::http::Response {
+        self.response()
+    }
+}
+
 impl<E: std::error::Error + Send + 'static> AppError for E {
     fn response(&self) -> ntex::web::HttpResponse {
         error!(error = %self, "Internal Server Error.");
 
         server_error_response(self.to_string().into())
-    }
-}
-
-// =============================================================================
-// Error impls
-
-impl From<serde_json::Error> for BoxedAppError {
-    fn from(error: serde_json::Error) -> BoxedAppError {
-        Box::new(error)
-    }
-}
-
-impl From<std::io::Error> for BoxedAppError {
-    fn from(error: std::io::Error) -> BoxedAppError {
-        Box::new(error)
-    }
-}
-
-impl From<std::convert::Infallible> for BoxedAppError {
-    fn from(error: std::convert::Infallible) -> BoxedAppError {
-        Box::new(error)
-    }
-}
-
-impl From<anyhow::Error> for BoxedAppError {
-    fn from(error: anyhow::Error) -> BoxedAppError {
-        internal_app_error(error.to_string().into())
-    }
-}
-
-impl From<ntex::http::header::InvalidHeaderValue> for BoxedAppError {
-    fn from(_: ntex::http::header::InvalidHeaderValue) -> Self {
-        internal_app_error("Invalid header value!".into())
-    }
-}
-
-impl From<ntex::web::Error> for BoxedAppError {
-    fn from(error: ntex::web::Error) -> Self {
-        error.into()
-    }
-}
-
-impl From<ntex::web::error::QueryPayloadError> for BoxedAppError {
-    fn from(error: ntex::web::error::QueryPayloadError) -> Self {
-        Box::new(error)
-    }
-}
-
-impl From<sailfish::RenderError> for BoxedAppError {
-    fn from(error: sailfish::RenderError) -> Self {
-        Box::new(error)
-    }
-}
-
-impl From<serde_urlencoded::ser::Error> for BoxedAppError {
-    fn from(error: serde_urlencoded::ser::Error) -> Self {
-        Box::new(error)
-    }
-}
-
-impl From<ntex::http::uri::InvalidUri> for BoxedAppError {
-    fn from(error: ntex::http::uri::InvalidUri) -> Self {
-        Box::new(error)
     }
 }
 
@@ -133,50 +82,6 @@ impl std::ops::Deref for ErrorField {
     fn deref(&self) -> &Self::Target {
         &self.0
     }
-}
-
-impl ntex::web::WebResponseError for BoxedAppError {
-    fn error_response(&self, _: &ntex::web::HttpRequest) -> ntex::http::Response {
-        self.response()
-    }
-}
-
-// =============================================================================
-// Internal error
-
-#[derive(Debug, Clone)]
-pub struct InternalAppError {
-    description: std::borrow::Cow<'static, str>,
-}
-
-impl std::fmt::Display for InternalAppError {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{:?}", self.description)
-    }
-}
-
-impl AppError for InternalAppError {
-    fn response(&self) -> ntex::web::HttpResponse {
-        error!(error = %self, "Internal server error.");
-
-        let response = ntex::web::HttpResponse::new(ntex::http::StatusCode::INTERNAL_SERVER_ERROR);
-
-        response.extensions_mut().insert(ErrorField::new(self.clone().into()));
-
-        response
-    }
-}
-
-impl From<InternalAppError> for BoxedAppError {
-    fn from(error: InternalAppError) -> Self {
-        Box::new(error)
-    }
-}
-
-pub fn internal_app_error(description: std::borrow::Cow<'static, str>) -> BoxedAppError {
-    let error = InternalAppError { description };
-
-    error.into()
 }
 
 pub fn server_error_response(description: std::borrow::Cow<'static, str>) -> ntex::web::HttpResponse {

@@ -2,7 +2,7 @@ use super::{server_error_response, AppError, BoxedAppError};
 
 #[derive(Debug)]
 struct RegExpError {
-    error: regex::Error,
+    pub error: regex::Error,
 }
 
 impl AppError for RegExpError {
