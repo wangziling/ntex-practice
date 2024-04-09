@@ -70,6 +70,8 @@ pub enum MiddlewareError {
 pub enum ExtensionError {
     #[error("Distribute cache missing.")]
     DistributeCacheMissing,
+    #[error("Persistent cache missing.")]
+    PersistentCacheMissing,
 }
 
 error_impl!(MiddlewareError, ntex::http::StatusCode::BAD_REQUEST);
