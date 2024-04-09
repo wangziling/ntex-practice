@@ -19,6 +19,7 @@ sailfish.workspace = true
 serde_urlencoded.workspace = true
 fred.workspace = true
 regex.workspace = true
+moka.workspace = true
 
 [dev-dependencies]
 paste = { version = "1.0" }

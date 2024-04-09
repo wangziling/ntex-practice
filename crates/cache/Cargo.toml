@@ -13,3 +13,7 @@ keywords.workspace = true
 tracing.workspace = true
 fred.workspace = true
 web_core.workspace = true
+moka.workspace = true
+tokio.workspace = true
+serde_json.workspace = true
+once_cell.workspace = true

@@ -40,3 +40,5 @@ once_cell = { version = "1.19" }
 serde_urlencoded = { version = "0.7.1" }
 fred = { version = "8.0", features = ["partial-tracing", "serde-json"] }
 regex = { version = "1.10" }
+moka = { version = "0.12.1", features = ["future"] }
+tokio = { version = "1.37", features = ["sync"] }

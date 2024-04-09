@@ -53,3 +53,9 @@ impl From<ntex::http::uri::InvalidUri> for BoxedAppError {
         Box::new(error)
     }
 }
+
+impl From<moka::PredicateError> for BoxedAppError {
+    fn from(error: moka::PredicateError) -> Self {
+        Box::new(error)
+    }
+}
