@@ -17,8 +17,7 @@ fn build_greeting_routes(cfg: &mut ServiceConfig) {
 
     cfg.service(
         scope("/greeting") // Third one.
-            .wrap(crate::middlewares::prerequisites::RequireJson) // Second one.
-            .wrap(crate::middlewares::extensions::ExtensionDistributeCache) // First middleware.
+            .wrap(crate::middlewares::prerequisites::RequireJson) // Second one. // First middleware.
             .service((
                 resource("/hello").to(crate::controllers::greeting::hello),
                 resource("/hello4").to(crate::controllers::greeting::hello4),
