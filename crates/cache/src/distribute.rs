@@ -34,7 +34,7 @@ impl DerefMut for DistributeCache {
     }
 }
 
-pub struct DistributeCacheExtension(pub DistributeCacheGlobal);
+pub struct DistributeCacheExtension(DistributeCacheGlobal);
 
 impl Deref for DistributeCacheExtension {
     type Target = DistributeCacheGlobal;
@@ -42,16 +42,6 @@ impl Deref for DistributeCacheExtension {
         &self.0
     }
 }
-
-// pub trait RequestDistributeCache {
-//     fn distribute_cache(&self) -> &DistributeCacheExtension;
-// }
-
-// impl<T: ntex::http::HttpMessage> RequestDistributeCache for T {
-//     fn distribute_cache(&self) -> &DistributeCacheExtension {
-//         self.message_extensions().get::<DistributeCacheExtension>().expect(crate::error::ExtensionError::DistributeCacheMissing.to_string())
-//     }
-// }
 
 pub async fn generate(config: DistributeCacheConfig) -> Result<DistributeCacheGlobal> {
     let client = DistributeCache {
