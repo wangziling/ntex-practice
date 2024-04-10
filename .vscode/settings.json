@@ -3,6 +3,7 @@
     "endregion",
     "impls",
     "moka",
-    "ntex"
+    "ntex",
+    "rslock"
   ]
 }
