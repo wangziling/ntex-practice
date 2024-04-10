@@ -43,6 +43,7 @@ pub mod middleware_prelude {
     pub use crate::server_response_warning;
     pub use crate::utils::{query_to_string, remove_query, update_query, update_query_map};
 
+    pub use ntex::http::header::HeaderValue;
     pub use ntex::http::{Method, StatusCode};
     pub use ntex::service::{Middleware, Service, ServiceCtx};
     pub use ntex::web::{Error, ErrorRenderer, WebRequest, WebResponse};
