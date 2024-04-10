@@ -55,7 +55,7 @@ pub async fn hello3(req: HttpRequest, state: State<crate::app::AppState>) -> App
             tokio::time::sleep(std::time::Duration::from_secs(1)).await;
             info!(uri = %req.uri(), "-----------------");
         })
-        .await;
+        .await?;
 
     info!("2222222222222");
 
