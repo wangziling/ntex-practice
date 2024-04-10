@@ -17,15 +17,15 @@ macro_rules! __server_response_impl {
 // No need to export.
 macro_rules! header_contains {
     ($headers_map: expr, $key:expr, $target_val:expr) => {
-        $headers_map.get_all($key).into_iter().any(|val| val.to_str().unwrap_or_default().contains($target_val))
+        $headers_map.get_all($key).into_iter().any(|val| val.as_bytes().starts_with($target_val))
     };
 
     ($headers_map: expr, $key:expr, $target_val:expr, ignore_case: $ignore_case:expr) => {
         $headers_map.get_all($key).into_iter().any(|val| {
             if $ignore_case {
-                val.to_str().unwrap_or_default().to_lowercase().contains($target_val.to_lowercase().as_str())
+                val.as_bytes().to_ascii_lowercase().starts_with($target_val.to_ascii_lowercase().as_slice())
             } else {
-                val.to_str().unwrap_or_default().contains($target_val)
+                val.as_bytes().starts_with($target_val)
             }
         })
     };

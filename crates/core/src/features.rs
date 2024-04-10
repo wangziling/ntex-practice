@@ -42,23 +42,27 @@ pub trait RequestUtils {
 
 impl<T: ntex::http::HttpMessage> RequestUtils for T {
     fn wants_json(&self) -> bool {
-        header_contains!(self.message_headers(), ntex::http::header::ACCEPT, "json")
+        header_contains!(self.message_headers(), ntex::http::header::ACCEPT, b"json")
     }
 
     fn derived_from_json(&self) -> bool {
-        header_contains!(self.message_headers(), ntex::http::header::CONTENT_TYPE, "application/json")
+        header_contains!(self.message_headers(), ntex::http::header::CONTENT_TYPE, b"application/json")
     }
 
     fn derived_from_form(&self) -> bool {
-        header_contains!(self.message_headers(), ntex::http::header::CONTENT_TYPE, "application/x-www-form-urlencoded")
+        header_contains!(
+            self.message_headers(),
+            ntex::http::header::CONTENT_TYPE,
+            b"application/x-www-form-urlencoded".to_ascii_lowercase().as_slice()
+        )
     }
 
     fn derived_from_form_data(&self) -> bool {
-        header_contains!(self.message_headers(), ntex::http::header::CONTENT_TYPE, "multipart/form-data")
+        header_contains!(self.message_headers(), ntex::http::header::CONTENT_TYPE, b"multipart/form-data")
     }
 
     fn derived_from_ajax(&self) -> bool {
-        header_contains!(self.message_headers(), "x-requested-with", "XMLHttpRequest", ignore_case: true)
+        header_contains!(self.message_headers(), "x-requested-with", b"XMLHttpRequest", ignore_case: true)
     }
 }
 
