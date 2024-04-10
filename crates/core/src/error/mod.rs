@@ -1,3 +1,4 @@
+pub mod async_op_guard;
 pub mod impls;
 pub mod internal_error;
 pub mod redis;
