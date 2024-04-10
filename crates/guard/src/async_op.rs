@@ -1,6 +1,6 @@
 /// Async op guard - Redis Lock.
 /// Make sure that only one process here on concurrent env now.
-use rslock::LockManager;
+use rslock::{LockError, LockManager};
 use std::future::Future;
 use std::ops::Deref;
 use std::sync::Arc;
@@ -17,16 +17,31 @@ impl AsyncOpGuard {
         AsyncOpGuard { inner: LockManager::new(vec![config]) }
     }
 
-    pub async fn spawn<F>(&self, resource: &[u8], ttl: usize, async_task: F) -> F::Output
+    /// Acquire a lock.
+    /// May be stuck eternally.
+    pub async fn spawn_acquire<F>(&self, resource: &[u8], ttl: usize, async_task: F) -> F::Output
     where
         F: Future,
         F::Output: Send + Sync,
     {
+        // May be stuck.
         let lock = self.acquire(resource, ttl).await;
         let result = async_task.await;
         drop(lock);
 
         result
+    }
+
+    pub async fn spawn<F>(&self, resource: &[u8], ttl: usize, async_task: F) -> Result<F::Output, LockError>
+    where
+        F: Future,
+        F::Output: Send + Sync,
+    {
+        let lock = self.lock(resource, ttl).await?;
+        let result = async_task.await;
+        self.unlock(&lock).await;
+
+        Ok(result)
     }
 }
 
