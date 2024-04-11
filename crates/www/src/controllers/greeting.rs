@@ -26,7 +26,7 @@ pub async fn hello2(state: State<crate::app::AppState>) -> AppResult<impl Respon
     let persistent_cache = state.persistent_cache.read().await;
 
     // Closure. Make sure we only insert once.
-    persistent_mark_sure!(persistent_cache, {
+    persistent_make_sure!(persistent_cache, {
         let _test_val = persistent_cache
             .entry("test")
             .or_insert_with(async {

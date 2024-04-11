@@ -51,7 +51,7 @@ pub fn generate() -> PersistentCacheGlobal {
 }
 
 #[macro_export]
-macro_rules! persistent_mark_sure {
+macro_rules! persistent_make_sure {
     ($cache: expr, $task: expr) => {
         $task;
 

@@ -16,7 +16,7 @@ pub mod prelude {
     pub use crate::persistent::{
         PersistentCache, PersistentCacheExtension, PersistentCacheGlobal, PersistentCacheKey, PersistentCacheValue,
     };
-    pub use crate::persistent_mark_sure;
+    pub use crate::persistent_make_sure;
 }
 
 /// Distribute cache can only be accessed in `app_state`.
