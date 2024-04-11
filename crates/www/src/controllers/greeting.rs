@@ -39,7 +39,7 @@ pub async fn hello2(state: State<crate::app::AppState>) -> AppResult<impl Respon
 
     info!(count = %persistent_cache.entry_count()); // Must to be 1.
 
-    Ok(server_response_success!(Some(HelloWorld { greeting: "你好，世界。" })))
+    Ok(server_response_success!(data: HelloWorld { greeting: "你好，世界。" }))
 }
 
 pub async fn hello3(req: HttpRequest, state: State<crate::app::AppState>) -> AppResult<impl Responder> {
