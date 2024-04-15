@@ -156,11 +156,11 @@ where
         if self.tailing_slash_operation_enabled() {
             if path.ends_with("/") {
                 let origin_uri_string = uri.to_string();
-                let transformed_path = path.trim_end_matches("/");
+                let transformed_path = path.trim_end_matches("/").to_string() + "/";
 
                 let transformed_url = match uri.query() {
-                    Some(query) if !query.is_empty() => transformed_path.to_string() + "?" + query,
-                    _ => transformed_path.to_string(),
+                    Some(query) if !query.is_empty() => transformed_path + "?" + query,
+                    _ => transformed_path,
                 };
 
                 if self.tailing_slash_redirect() {
