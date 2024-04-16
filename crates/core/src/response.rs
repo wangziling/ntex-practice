@@ -1,6 +1,5 @@
-use serde::Serialize;
-
 use crate::error::{AppResult, BoxedAppError};
+use serde::{Deserialize, Serialize};
 
 pub struct OriginalUrl(String);
 
@@ -53,7 +52,7 @@ impl<Err: ntex::web::ErrorRenderer> HttpResponseExt<Err> for ntex::web::HttpResp
     }
 }
 
-#[derive(Serialize, Default)]
+#[derive(Serialize, Default, Deserialize, PartialEq, Eq, Debug)]
 #[serde(rename_all = "lowercase")]
 pub enum ResponseStatus {
     #[default]
@@ -62,8 +61,7 @@ pub enum ResponseStatus {
     Warning,
 }
 
-#[allow(unused)]
-#[derive(Serialize)]
+#[derive(Serialize, Deserialize, PartialEq, Eq, Debug)]
 pub struct ServerResponse<D: Serialize, M: AsRef<str> + Serialize> {
     data: Option<D>,
     message: Option<M>,
