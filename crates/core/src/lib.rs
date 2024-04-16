@@ -7,6 +7,7 @@ extern crate anyhow;
 #[macro_use]
 mod macros;
 
+pub mod constants;
 pub mod error;
 pub mod features;
 pub mod response;

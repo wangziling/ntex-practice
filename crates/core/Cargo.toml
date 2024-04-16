@@ -22,6 +22,4 @@ regex.workspace = true
 moka.workspace = true
 rslock.workspace = true
 memmem.workspace = true
-
-[dev-dependencies]
-paste = { version = "1.0" }
+paste.workspace = true

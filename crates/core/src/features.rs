@@ -1,3 +1,7 @@
+use crate::constants::{
+    FORM_DATA_HEADER_VALUE_BYTES, FORM_HEADER_VALUE_BYTES, JSON_HEADER_VALUE_BYTES,
+    REQUESTED_WITH_AJAX_HEADER_VALUE_BYTES, REQUESTED_WITH_HEADER_NAME,
+};
 use crate::error::Result;
 
 pub(crate) type QueryItemKey = String;
@@ -43,27 +47,27 @@ pub trait RequestUtils {
 impl<T: ntex::http::HttpMessage> RequestUtils for T {
     #[inline]
     fn wants_json(&self) -> bool {
-        header_contains!(self.message_headers(), ntex::http::header::ACCEPT, b"json")
+        header_contains!(self.message_headers(), ntex::http::header::ACCEPT, JSON_HEADER_VALUE_BYTES)
     }
 
     #[inline]
     fn derived_from_json(&self) -> bool {
-        header_contains!(self.message_headers(), ntex::http::header::CONTENT_TYPE, b"application/json")
+        header_contains!(self.message_headers(), ntex::http::header::CONTENT_TYPE, JSON_HEADER_VALUE_BYTES)
     }
 
     #[inline]
     fn derived_from_form(&self) -> bool {
-        header_contains!(self.message_headers(), ntex::http::header::CONTENT_TYPE, b"application/x-www-form-urlencoded", ignore_case: true)
+        header_contains!(self.message_headers(), ntex::http::header::CONTENT_TYPE, FORM_HEADER_VALUE_BYTES, ignore_case: true)
     }
 
     #[inline]
     fn derived_from_form_data(&self) -> bool {
-        header_contains!(self.message_headers(), ntex::http::header::CONTENT_TYPE, b"multipart/form-data")
+        header_contains!(self.message_headers(), ntex::http::header::CONTENT_TYPE, FORM_DATA_HEADER_VALUE_BYTES)
     }
 
     #[inline]
     fn derived_from_ajax(&self) -> bool {
-        header_contains!(self.message_headers(), "x-requested-with", b"XMLHttpRequest", ignore_case: true)
+        header_contains!(self.message_headers(), REQUESTED_WITH_HEADER_NAME, REQUESTED_WITH_AJAX_HEADER_VALUE_BYTES, ignore_case: true)
     }
 }
 
