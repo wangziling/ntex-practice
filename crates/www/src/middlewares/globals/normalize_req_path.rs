@@ -1,37 +1,57 @@
 use crate::constants::{INTERNAL_SERVER_ERROR_REQ_PATH, NOT_FOUND_REQ_PATH};
+use once_cell::sync::Lazy;
+use regex::Regex;
 use web_core::middleware_prelude::*;
 
+const MERGE_MULTIPLE_INTERIOR_SLASH_REGEXP: Lazy<Regex> = Lazy::new(|| Regex::new(r"//+").unwrap());
+
+#[derive(Default, Clone)]
+pub enum NormalizeReqPathInteriorSlashOpsMode {
+    #[default]
+    MergeMultiple,
+}
+
+#[derive(Default, Clone)]
+pub enum NormalizeReqPathInteriorSlashOps {
+    #[default]
+    LetItGo,
+    NeedOperation {
+        mode: NormalizeReqPathInteriorSlashOpsMode,
+    },
+}
+
 #[derive(Default)]
-pub enum NormalizeReqPathTailingSlashMode {
+pub enum NormalizeReqPathSlashMode {
     #[default]
     LetItGo,
     NeedOperation {
         use_redirect: bool,
-        tailing_slash_redirect_status: Option<StatusCode>,
+        redirect_status: Option<StatusCode>,
+        interior_slash_ops: Option<NormalizeReqPathInteriorSlashOps>,
     },
 }
 
 pub struct NormalizeReqPath {
-    tailing_slash_mode: std::rc::Rc<NormalizeReqPathTailingSlashMode>,
+    slash_mode: std::rc::Rc<NormalizeReqPathSlashMode>,
 }
 
 impl<S> Middleware<S> for NormalizeReqPath {
     type Service = NormalizeReqPathInner<S>;
 
     fn create(&self, service: S) -> Self::Service {
-        NormalizeReqPathInner { service, tailing_slash_mode: self.tailing_slash_mode.clone() }
+        NormalizeReqPathInner { service, slash_mode: self.slash_mode.clone() }
     }
 }
 
 impl Default for NormalizeReqPath {
     fn default() -> Self {
-        Self { tailing_slash_mode: Default::default() }
+        Self { slash_mode: Default::default() }
     }
 }
 
 pub struct NormalizeReqPathInner<S> {
     service: S,
-    tailing_slash_mode: std::rc::Rc<NormalizeReqPathTailingSlashMode>,
+    slash_mode: std::rc::Rc<NormalizeReqPathSlashMode>,
 }
 
 impl<S, Err> Service<WebRequest<Err>> for NormalizeReqPathInner<S>
@@ -47,33 +67,66 @@ where
     async fn call(&self, mut req: WebRequest<Err>, ctx: ServiceCtx<'_, Self>) -> Result<Self::Response, Self::Error> {
         let head_mut = req.match_info_mut();
         let uri = head_mut.get_ref();
-        let path = uri.path();
+        let mut path = uri.path();
 
         // The landing page.
         if path.is_empty() || path == "/" {
             return ctx.call(&self.service, req).await;
         }
 
-        if self.tailing_slash_operation_enabled() {
+        if self.slash_operation_enabled() {
+            let mut is_path_changed = false;
+
+            if self.interior_slash_ops_enabled() {
+                match self.interior_slash_ops() {
+                    Some(NormalizeReqPathInteriorSlashOpsMode::MergeMultiple) => {
+                        let result = MERGE_MULTIPLE_INTERIOR_SLASH_REGEXP.replace_all(path, "/").to_string();
+                        if result != path {
+                            path = result.leak();
+
+                            // Mark as `changed`.
+                            is_path_changed = true;
+                        }
+                    }
+                    None => {}
+                }
+            }
+
+            macro_rules! operation {
+                ($transformed_path: expr, $origin_uri_string: expr) => {
+                    {
+                        let transformed_url = match uri.query() {
+                            Some(query) if !query.is_empty() => $transformed_path + "?" + query,
+                            _ => $transformed_path,
+                        };
+
+                        if self.slash_redirect() {
+                            return Ok(server_redirect!(transformed_url, prev_url: $origin_uri_string, optional_status_code: self.redirect_status())?.into_web_response(req));
+                        }
+
+                        head_mut.set(transformed_url.parse::<ntex::http::Uri>().map_err(Into::<BoxedAppError>::into)?);
+                        req.head_mut().extensions_mut().insert(OriginalUrl::new($origin_uri_string));
+
+                        ctx.call(&self.service, req).await
+                    }
+                };
+            }
+
+            let origin_uri_string = uri.to_string();
             if path.ends_with("/") {
-                let origin_uri_string = uri.to_string();
-                let mut transformed_path = path.trim_end_matches("/").to_string();
+                let mut transformed_path = path.trim_end_matches("/").to_owned();
 
                 if transformed_path.is_empty() {
                     transformed_path = "/".to_owned();
                 }
 
-                let transformed_url = match uri.query() {
-                    Some(query) if !query.is_empty() => transformed_path + "?" + query,
-                    _ => transformed_path,
-                };
+                // Return.
+                return operation!(transformed_path, origin_uri_string);
+            }
 
-                if self.tailing_slash_redirect() {
-                    return Ok(server_redirect!(transformed_url, prev_url: origin_uri_string, optional_status_code: self.tailing_slash_redirect_status())?.into_web_response(req));
-                }
-
-                head_mut.set(transformed_url.parse::<ntex::http::Uri>().map_err(Into::<BoxedAppError>::into)?);
-                req.head_mut().extensions_mut().insert(OriginalUrl::new(origin_uri_string));
+            if is_path_changed {
+                // Return.
+                return operation!(path.to_owned(), origin_uri_string);
             }
         }
 
@@ -83,20 +136,19 @@ where
 
 macro_rules! __normalize_req_path_impl {
     () => {
-        fn wrap_tailing_slash_mode(
-            mode: NormalizeReqPathTailingSlashMode,
-        ) -> std::rc::Rc<NormalizeReqPathTailingSlashMode> {
+        #[inline]
+        fn wrap_slash_mode(mode: NormalizeReqPathSlashMode) -> std::rc::Rc<NormalizeReqPathSlashMode> {
             std::rc::Rc::new(mode)
         }
 
-        pub fn use_tailing_slash_operation(mut self) -> Self {
-            match *self.tailing_slash_mode.as_ref() {
-                NormalizeReqPathTailingSlashMode::LetItGo => {
-                    self.tailing_slash_mode =
-                        Self::wrap_tailing_slash_mode(NormalizeReqPathTailingSlashMode::NeedOperation {
-                            use_redirect: false,
-                            tailing_slash_redirect_status: None,
-                        });
+        pub fn use_slash_operation(mut self) -> Self {
+            match *self.slash_mode.as_ref() {
+                NormalizeReqPathSlashMode::LetItGo => {
+                    self.slash_mode = Self::wrap_slash_mode(NormalizeReqPathSlashMode::NeedOperation {
+                        use_redirect: false,
+                        redirect_status: None,
+                        interior_slash_ops: None,
+                    });
                 }
 
                 _ => {}
@@ -105,35 +157,39 @@ macro_rules! __normalize_req_path_impl {
             self
         }
 
-        pub fn set_tailing_slash_redirect(mut self, use_redirect: bool) -> Self {
-            self.tailing_slash_mode = Self::wrap_tailing_slash_mode(match *self.tailing_slash_mode.as_ref() {
-                NormalizeReqPathTailingSlashMode::LetItGo => NormalizeReqPathTailingSlashMode::NeedOperation {
+        pub fn set_slash_redirect(mut self, use_redirect: bool) -> Self {
+            self.slash_mode = Self::wrap_slash_mode(match self.slash_mode.as_ref() {
+                NormalizeReqPathSlashMode::LetItGo => NormalizeReqPathSlashMode::NeedOperation {
                     use_redirect,
-                    tailing_slash_redirect_status: None,
+                    redirect_status: None,
+                    interior_slash_ops: None,
                 },
-                NormalizeReqPathTailingSlashMode::NeedOperation { tailing_slash_redirect_status, .. } => {
-                    NormalizeReqPathTailingSlashMode::NeedOperation { use_redirect, tailing_slash_redirect_status }
+                NormalizeReqPathSlashMode::NeedOperation { redirect_status, interior_slash_ops, .. } => {
+                    NormalizeReqPathSlashMode::NeedOperation {
+                        use_redirect,
+                        redirect_status: redirect_status.clone(),
+                        interior_slash_ops: interior_slash_ops.clone(),
+                    }
                 }
             });
 
             self
         }
 
-        pub fn set_tailing_slash_redirect_status<T: TryInto<StatusCode>>(
-            mut self,
-            tailing_slash_redirect_status: T,
-        ) -> Self {
-            match TryInto::<StatusCode>::try_into(tailing_slash_redirect_status).ok() {
-                Some(tailing_slash_redirect_status) => {
-                    self.tailing_slash_mode = Self::wrap_tailing_slash_mode(match *self.tailing_slash_mode.as_ref() {
-                        NormalizeReqPathTailingSlashMode::LetItGo => NormalizeReqPathTailingSlashMode::NeedOperation {
+        pub fn set_redirect_status<T: TryInto<StatusCode>>(mut self, redirect_status: T) -> Self {
+            match TryInto::<StatusCode>::try_into(redirect_status).ok() {
+                Some(redirect_status) => {
+                    self.slash_mode = Self::wrap_slash_mode(match self.slash_mode.as_ref() {
+                        NormalizeReqPathSlashMode::LetItGo => NormalizeReqPathSlashMode::NeedOperation {
                             use_redirect: true,
-                            tailing_slash_redirect_status: Some(tailing_slash_redirect_status),
+                            redirect_status: Some(redirect_status),
+                            interior_slash_ops: None,
                         },
-                        NormalizeReqPathTailingSlashMode::NeedOperation { use_redirect, .. } => {
-                            NormalizeReqPathTailingSlashMode::NeedOperation {
-                                use_redirect,
-                                tailing_slash_redirect_status: Some(tailing_slash_redirect_status),
+                        NormalizeReqPathSlashMode::NeedOperation { use_redirect, interior_slash_ops, .. } => {
+                            NormalizeReqPathSlashMode::NeedOperation {
+                                use_redirect: use_redirect.clone(),
+                                redirect_status: Some(redirect_status),
+                                interior_slash_ops: interior_slash_ops.clone(),
                             }
                         }
                     });
@@ -145,25 +201,76 @@ macro_rules! __normalize_req_path_impl {
             self
         }
 
-        pub fn tailing_slash_operation_enabled(&self) -> bool {
-            match *self.tailing_slash_mode.as_ref() {
-                NormalizeReqPathTailingSlashMode::LetItGo => false,
+        pub fn enable_interior_slash_ops(mut self) -> Self {
+            match self.slash_mode.as_ref() {
+                NormalizeReqPathSlashMode::LetItGo => {
+                    self.slash_mode = Self::wrap_slash_mode(NormalizeReqPathSlashMode::NeedOperation {
+                        use_redirect: false,
+                        redirect_status: None,
+                        interior_slash_ops: None,
+                    });
+                }
+                NormalizeReqPathSlashMode::NeedOperation { use_redirect, redirect_status, interior_slash_ops }
+                    if interior_slash_ops.is_none()
+                        || matches!(*interior_slash_ops, Some(NormalizeReqPathInteriorSlashOps::LetItGo)) =>
+                {
+                    self.slash_mode = Self::wrap_slash_mode(NormalizeReqPathSlashMode::NeedOperation {
+                        use_redirect: use_redirect.clone(),
+                        redirect_status: redirect_status.clone(),
+                        interior_slash_ops: Some(NormalizeReqPathInteriorSlashOps::NeedOperation {
+                            mode: Default::default(),
+                        }),
+                    });
+                }
+
+                _ => {}
+            };
+
+            self
+        }
+
+        #[inline]
+        pub fn slash_operation_enabled(&self) -> bool {
+            match *self.slash_mode.as_ref() {
+                NormalizeReqPathSlashMode::LetItGo => false,
                 _ => true,
             }
         }
 
-        pub fn tailing_slash_redirect(&self) -> bool {
-            match *self.tailing_slash_mode.as_ref() {
-                NormalizeReqPathTailingSlashMode::NeedOperation { use_redirect, .. } => use_redirect,
+        #[inline]
+        pub fn slash_redirect(&self) -> bool {
+            match self.slash_mode.as_ref() {
+                NormalizeReqPathSlashMode::NeedOperation { use_redirect, .. } => *use_redirect,
                 _ => false,
             }
         }
 
-        pub fn tailing_slash_redirect_status(&self) -> Option<StatusCode> {
-            match *self.tailing_slash_mode.as_ref() {
-                NormalizeReqPathTailingSlashMode::NeedOperation { tailing_slash_redirect_status, .. } => {
-                    tailing_slash_redirect_status
-                }
+        #[inline]
+        pub fn redirect_status(&self) -> Option<StatusCode> {
+            match self.slash_mode.as_ref() {
+                NormalizeReqPathSlashMode::NeedOperation { redirect_status, .. } => *redirect_status,
+                _ => None,
+            }
+        }
+
+        #[inline]
+        pub fn interior_slash_ops_enabled(&self) -> bool {
+            match self.slash_mode.as_ref() {
+                NormalizeReqPathSlashMode::NeedOperation { interior_slash_ops, .. } => match *interior_slash_ops {
+                    Some(NormalizeReqPathInteriorSlashOps::NeedOperation { .. }) => true,
+                    _ => false,
+                },
+                _ => false,
+            }
+        }
+
+        #[inline]
+        pub fn interior_slash_ops(&self) -> Option<NormalizeReqPathInteriorSlashOpsMode> {
+            match self.slash_mode.as_ref() {
+                NormalizeReqPathSlashMode::NeedOperation { interior_slash_ops, .. } => match interior_slash_ops {
+                    Some(NormalizeReqPathInteriorSlashOps::NeedOperation { mode, .. }) => Some(mode.clone()),
+                    _ => None,
+                },
                 _ => None,
             }
         }
@@ -200,10 +307,20 @@ mod tests {
     use web_core::constants::{JSON_HEADER_VALUE, REQUESTED_WITH_AJAX_HEADER_VALUE, REQUESTED_WITH_HEADER_NAME};
     use web_core::response::OriginalUrl;
 
-    use super::NormalizeReqPath;
+    use super::{NormalizeReqPath, MERGE_MULTIPLE_INTERIOR_SLASH_REGEXP};
 
-    const TEST_URL: &str = "/test";
-    const TEST_PATHS: Lazy<Vec<&str>> = Lazy::new(|| vec!["/test/", "/test//////", "/test/?a=1", "/test//////?a=1"]);
+    const TEST_URL: &str = "/test/a/b/c";
+    const TEST_PATHS: Lazy<Vec<&str>> =
+        Lazy::new(|| vec!["/test/a/b/c/", "/test/a/b/c/////", "/test/a/b/c/?a=1", "/test/a/b/c/////?a=1"]);
+    const TEST_PATHS_WITH_INTERIOR_SLASH: Lazy<Vec<&str>> = Lazy::new(|| {
+        vec![
+            "/test//////a///b/c/",
+            "/test/a////b////c/////",
+            "/test////a/b/c/?a=1",
+            "/test/a/b////c/////?a=1",
+            "/test/a/b////c?a=1",
+        ]
+    });
 
     macro_rules! normal_works_well {
         ($app: expr) => {
@@ -236,10 +353,10 @@ mod tests {
     }
 
     #[ntex::test]
-    async fn tailing_slash_default() {
+    async fn slash_default() {
         let app = init_service(
             App::new()
-                .wrap(NormalizeReqPath::default().use_tailing_slash_operation())
+                .wrap(NormalizeReqPath::default().use_slash_operation())
                 .service(resource(TEST_URL).to(|| async { HttpResponse::Ok() })),
         )
         .await;
@@ -262,10 +379,10 @@ mod tests {
     }
 
     #[ntex::test]
-    async fn tailing_slash_redirection() {
+    async fn slash_redirection() {
         let app = init_service(
             App::new()
-                .wrap(NormalizeReqPath::default().use_tailing_slash_operation().set_tailing_slash_redirect(true))
+                .wrap(NormalizeReqPath::default().use_slash_operation().set_slash_redirect(true))
                 .service(resource(TEST_URL).to(|| async { HttpResponse::Ok() })),
         )
         .await;
@@ -296,14 +413,14 @@ mod tests {
     }
 
     #[ntex::test]
-    async fn tailing_slash_redirection_307() {
+    async fn slash_redirection_307() {
         let app = init_service(
             App::new()
                 .wrap(
                     NormalizeReqPath::default()
-                        .use_tailing_slash_operation()
-                        .set_tailing_slash_redirect(true)
-                        .set_tailing_slash_redirect_status(StatusCode::TEMPORARY_REDIRECT),
+                        .use_slash_operation()
+                        .set_slash_redirect(true)
+                        .set_redirect_status(StatusCode::TEMPORARY_REDIRECT),
                 )
                 .service(resource(TEST_URL).to(|| async { HttpResponse::Ok() })),
         )
@@ -326,6 +443,45 @@ mod tests {
             // Validate uri.
             let location_uri = Uri::from_str(resp.headers().get(header::LOCATION).unwrap().to_str().unwrap()).unwrap();
             assert_eq!(location_uri.path(), path_uri.path().trim_end_matches("/"));
+            assert_eq!(location_uri.query(), path_uri.query());
+
+            // Validate extensions.
+            assert!(resp.response().extensions().get::<OriginalUrl>().is_some());
+            assert_eq!(resp.response().extensions().get::<OriginalUrl>().unwrap().as_str(), *path);
+        }
+    }
+
+    #[ntex::test]
+    async fn interior_slash_ops() {
+        let app = init_service(
+            App::new()
+                .wrap(
+                    NormalizeReqPath::default()
+                        .use_slash_operation()
+                        .set_slash_redirect(true)
+                        .enable_interior_slash_ops(),
+                )
+                .service(resource(TEST_URL).to(|| async { HttpResponse::Ok() })),
+        )
+        .await;
+
+        // Works well.
+        normal_works_well!(app);
+
+        for path in TEST_PATHS_WITH_INTERIOR_SLASH.iter() {
+            // Create request object
+            let req = TestRequest::with_uri(*path).to_request();
+            // Execute application
+            let resp = app.call(req).await.unwrap();
+
+            let path_uri = Uri::from_str(*path).unwrap();
+
+            // Validate uri.
+            let location_uri = Uri::from_str(resp.headers().get(header::LOCATION).unwrap().to_str().unwrap()).unwrap();
+            assert_eq!(
+                location_uri.path(),
+                MERGE_MULTIPLE_INTERIOR_SLASH_REGEXP.replace_all(path_uri.path().trim_end_matches("/"), "/")
+            );
             assert_eq!(location_uri.query(), path_uri.query());
 
             // Validate extensions.
