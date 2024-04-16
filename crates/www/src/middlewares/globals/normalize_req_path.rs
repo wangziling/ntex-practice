@@ -239,9 +239,11 @@ macro_rules! __normalize_req_path_impl {
         }
 
         #[inline]
-        pub fn redirect_status(&self) -> Option<StatusCode> {
+        pub fn redirect_status(&self) -> Option<&StatusCode> {
             match self.slash_mode.as_ref() {
-                NormalizeReqPathSlashMode::NeedOperation { redirect_status, .. } => *redirect_status,
+                NormalizeReqPathSlashMode::NeedOperation { redirect_status: Some(redirect_status), .. } => {
+                    Some(redirect_status)
+                }
                 _ => None,
             }
         }
@@ -258,10 +260,10 @@ macro_rules! __normalize_req_path_impl {
         }
 
         #[inline]
-        pub fn interior_slash_ops(&self) -> Option<NormalizeReqPathInteriorSlashOpsMode> {
+        pub fn interior_slash_ops(&self) -> Option<&NormalizeReqPathInteriorSlashOpsMode> {
             match self.slash_mode.as_ref() {
                 NormalizeReqPathSlashMode::NeedOperation { interior_slash_ops, .. } => match interior_slash_ops {
-                    Some(NormalizeReqPathInteriorSlashOps::NeedOperation { mode, .. }) => Some(mode.clone()),
+                    Some(NormalizeReqPathInteriorSlashOps::NeedOperation { mode, .. }) => Some(mode),
                     _ => None,
                 },
                 _ => None,
