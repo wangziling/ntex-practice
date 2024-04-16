@@ -13,5 +13,6 @@ pub mod middlewares;
 pub mod routes;
 pub mod utils;
 
+mod constants;
 mod controllers;
 mod error;

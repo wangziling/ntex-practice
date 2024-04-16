@@ -1,11 +1,13 @@
 use web_core::route_prelude::*;
 
+use crate::constants::{INTERNAL_SERVER_ERROR_REQ_PATH, NOT_FOUND_REQ_PATH};
+
 fn build_view_routes(cfg: &mut ServiceConfig) {
     cfg.service(resource("/").wrap(crate::middlewares::view::prerequisites()).to(crate::controllers::views::index));
 
     cfg.service(scope("/").wrap(crate::middlewares::view::prerequisites()).service((
-        resource("/404").route(get().to(crate::controllers::views::not_found)),
-        resource("/500").route(get().to(crate::controllers::views::internal_server_error)),
+        resource(NOT_FOUND_REQ_PATH).route(get().to(crate::controllers::views::not_found)),
+        resource(INTERNAL_SERVER_ERROR_REQ_PATH).route(get().to(crate::controllers::views::internal_server_error)),
     )));
 }
 
