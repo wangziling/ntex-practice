@@ -23,11 +23,11 @@ pub async fn hello(_req: HttpRequest, state: State<crate::app::AppState>) -> App
 }
 
 pub async fn hello2(state: State<crate::app::AppState>) -> AppResult<impl Responder> {
-    let persistent_cache = state.persistent_cache.read().await;
+    let memory_cache = state.memory_cache.read().await;
 
     // Closure. Make sure we only insert once.
-    persistent_make_sure!(persistent_cache, {
-        let _test_val = persistent_cache
+    memory_cache_make_sure!(memory_cache, {
+        let _test_val = memory_cache
             .entry("test")
             .or_insert_with(async {
                 info!("-----------------------------------------");
@@ -37,7 +37,7 @@ pub async fn hello2(state: State<crate::app::AppState>) -> AppResult<impl Respon
             .await;
     });
 
-    info!(count = %persistent_cache.entry_count()); // Must to be 1.
+    info!(count = %memory_cache.entry_count()); // Must to be 1.
 
     Ok(server_response_success!(data: HelloWorld { greeting: "你好，世界。" }))
 }

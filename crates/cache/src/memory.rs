@@ -4,41 +4,41 @@ use std::sync::Arc;
 use std::time::Duration;
 use tokio::sync::RwLock;
 
-pub type PersistentCacheKey = &'static str;
-pub type PersistentCacheValue = serde_json::Value;
+pub type MemoryCacheKey = &'static str;
+pub type MemoryCacheValue = serde_json::Value;
 
-pub type PersistentCacheGlobal = Arc<RwLock<PersistentCache>>;
+pub type MemoryCacheGlobal = Arc<RwLock<MemoryCache>>;
 
-pub struct PersistentCache {
-    client: Cache<PersistentCacheKey, PersistentCacheValue>,
+pub struct MemoryCache {
+    client: Cache<MemoryCacheKey, MemoryCacheValue>,
 }
 
-impl Deref for PersistentCache {
-    type Target = Cache<PersistentCacheKey, PersistentCacheValue>;
+impl Deref for MemoryCache {
+    type Target = Cache<MemoryCacheKey, MemoryCacheValue>;
     fn deref(&self) -> &Self::Target {
         &self.client
     }
 }
 
-impl DerefMut for PersistentCache {
+impl DerefMut for MemoryCache {
     fn deref_mut(&mut self) -> &mut Self::Target {
         &mut self.client
     }
 }
 
-pub struct PersistentCacheExtension(PersistentCacheGlobal);
+pub struct MemoryCacheExtension(MemoryCacheGlobal);
 
-impl Deref for PersistentCacheExtension {
-    type Target = PersistentCacheGlobal;
+impl Deref for MemoryCacheExtension {
+    type Target = MemoryCacheGlobal;
     fn deref(&self) -> &Self::Target {
         &self.0
     }
 }
 
-pub fn generate() -> PersistentCacheGlobal {
-    debug!("Generating the persistent cache.");
+pub fn generate() -> MemoryCacheGlobal {
+    debug!("Generating the Memory cache.");
 
-    Arc::new(RwLock::new(PersistentCache {
+    Arc::new(RwLock::new(MemoryCache {
         client: Cache::builder()
             // Time to live (TTL): 30 minutes
             .time_to_live(Duration::from_secs(30 * 60))
@@ -51,7 +51,7 @@ pub fn generate() -> PersistentCacheGlobal {
 }
 
 #[macro_export]
-macro_rules! persistent_make_sure {
+macro_rules! memory_cache_make_sure {
     ($cache: expr, $task: expr) => {
         $task;
 

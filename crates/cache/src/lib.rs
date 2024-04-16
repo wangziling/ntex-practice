@@ -2,7 +2,7 @@
 extern crate tracing;
 
 mod distribute;
-mod persistent;
+mod memory;
 
 use once_cell::sync::Lazy;
 use web_core::prelude::*;
@@ -13,10 +13,8 @@ pub mod prelude {
     pub use crate::distribute::{
         DistributeCache, DistributeCacheConfig, DistributeCacheExtension, DistributeCacheGlobal, DistributeCacheKey,
     };
-    pub use crate::persistent::{
-        PersistentCache, PersistentCacheExtension, PersistentCacheGlobal, PersistentCacheKey, PersistentCacheValue,
-    };
-    pub use crate::persistent_make_sure;
+    pub use crate::memory::{MemoryCache, MemoryCacheExtension, MemoryCacheGlobal, MemoryCacheKey, MemoryCacheValue};
+    pub use crate::memory_cache_make_sure;
 }
 
 /// Distribute cache can only be accessed in `app_state`.
@@ -28,5 +26,5 @@ pub async fn generate_distribute_cache(
     distribute::generate(config).await
 }
 
-/// Persistent cache should be a global state.
-pub static PERSISTENT_CACHE: Lazy<persistent::PersistentCacheGlobal> = Lazy::new(persistent::generate);
+/// Memory cache should be a global state.
+pub static MEMORY_CACHE: Lazy<memory::MemoryCacheGlobal> = Lazy::new(memory::generate);

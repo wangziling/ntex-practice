@@ -4,7 +4,7 @@ use web_core::prelude::*;
 pub struct App {
     pub config: crate::config::Server,
     pub distribute_cache: web_cache::prelude::DistributeCacheGlobal,
-    pub persistent_cache: web_cache::prelude::PersistentCacheGlobal,
+    pub memory_cache: web_cache::prelude::MemoryCacheGlobal,
     pub async_op_guard: web_guard::async_op::AsyncOpGuardGlobal,
 }
 
@@ -13,7 +13,7 @@ impl App {
         Ok(App {
             distribute_cache: web_cache::generate_distribute_cache(server_config.distribute_cache_config.clone())
                 .await?,
-            persistent_cache: Arc::clone(&web_cache::PERSISTENT_CACHE),
+            memory_cache: Arc::clone(&web_cache::MEMORY_CACHE),
             async_op_guard: web_guard::async_op::generate_async_op_guard(server_config.async_op_guard_config),
             config: server_config,
         })
