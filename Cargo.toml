@@ -44,3 +44,4 @@ regex = { version = "1.10" }
 moka = { version = "0.12.1", features = ["future"] }
 tokio = { version = "1.37", features = ["sync"] }
 rslock = { version = "0.3" }
+memmem = { version = "0.1" }

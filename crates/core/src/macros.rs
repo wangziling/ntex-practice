@@ -16,17 +16,30 @@ macro_rules! __server_response_impl {
 
 // No need to export.
 macro_rules! header_contains {
-    ($headers_map: expr, $key:expr, $target_val:expr) => {
-        $headers_map.get_all($key).into_iter().any(|val| val.as_bytes().starts_with($target_val))
-    };
+    ($headers_map: expr, $key:expr, $target_val:expr) => {{
+        use memmem::{Searcher, TwoWaySearcher};
+        use std::rc::Rc;
 
-    ($headers_map: expr, $key:expr, $target_val:expr, ignore_case: $ignore_case:expr) => {
+        let searcher = Rc::new(TwoWaySearcher::new($target_val));
+
+        $headers_map.get_all($key).into_iter().any(|val| searcher.search_in(val.as_bytes()).is_some())
+    }};
+
+    ($headers_map: expr, $key:expr, $target_val:expr, ignore_case: $ignore_case:expr) => {{
+        use memmem::{Searcher, TwoWaySearcher};
+        use std::rc::Rc;
+
         $headers_map.get_all($key).into_iter().any(|val| {
             if $ignore_case {
-                val.as_bytes().to_ascii_lowercase().starts_with($target_val.to_ascii_lowercase().as_slice())
+                let target = $target_val.to_ascii_lowercase();
+                let target = target.as_slice();
+
+                let searcher = Rc::new(TwoWaySearcher::new(target));
+                searcher.search_in(val.as_bytes().to_ascii_lowercase().as_slice()).is_some()
             } else {
-                val.as_bytes().starts_with($target_val)
+                let searcher = Rc::new(TwoWaySearcher::new($target_val));
+                searcher.search_in(val.as_bytes()).is_some()
             }
         })
-    };
+    }};
 }

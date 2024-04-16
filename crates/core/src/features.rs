@@ -41,26 +41,27 @@ pub trait RequestUtils {
 }
 
 impl<T: ntex::http::HttpMessage> RequestUtils for T {
+    #[inline]
     fn wants_json(&self) -> bool {
         header_contains!(self.message_headers(), ntex::http::header::ACCEPT, b"json")
     }
 
+    #[inline]
     fn derived_from_json(&self) -> bool {
         header_contains!(self.message_headers(), ntex::http::header::CONTENT_TYPE, b"application/json")
     }
 
+    #[inline]
     fn derived_from_form(&self) -> bool {
-        header_contains!(
-            self.message_headers(),
-            ntex::http::header::CONTENT_TYPE,
-            b"application/x-www-form-urlencoded".to_ascii_lowercase().as_slice()
-        )
+        header_contains!(self.message_headers(), ntex::http::header::CONTENT_TYPE, b"application/x-www-form-urlencoded", ignore_case: true)
     }
 
+    #[inline]
     fn derived_from_form_data(&self) -> bool {
         header_contains!(self.message_headers(), ntex::http::header::CONTENT_TYPE, b"multipart/form-data")
     }
 
+    #[inline]
     fn derived_from_ajax(&self) -> bool {
         header_contains!(self.message_headers(), "x-requested-with", b"XMLHttpRequest", ignore_case: true)
     }
