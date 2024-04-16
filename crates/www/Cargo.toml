@@ -23,6 +23,7 @@ serde_json.workspace = true
 sailfish.workspace = true
 fred.workspace = true
 tokio.workspace = true
+once_cell.workspace = true
 
 [[bin]]
 name = "server"

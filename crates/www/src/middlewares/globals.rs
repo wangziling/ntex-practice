@@ -76,9 +76,6 @@ where
                     return Ok(res);
                 }
 
-                // UNWRAP: Operation must be successful.
-                let mut uri = "/404".parse::<ntex::http::Uri>().unwrap();
-
                 if !req.derived_from_ajax() && req.method() == Method::GET {
                     // UNWRAP: Operation must be successful.
                     let mut uri = "/404".parse::<ntex::http::Uri>().unwrap();
@@ -297,3 +294,313 @@ macro_rules! normalize_req_path_impl {
 }
 normalize_req_path_impl!(NormalizeReqPath);
 normalize_req_path_impl!(NormalizeReqPathInner<S>);
+
+#[cfg(test)]
+mod tests {
+    use std::str::FromStr;
+
+    use ntex::http::{header, header::HeaderName, header::HeaderValue, StatusCode, Uri};
+    use ntex::service::{IntoService, Middleware, Pipeline};
+    use ntex::util::lazy;
+    use ntex::web::test::{init_service, TestRequest};
+    use ntex::web::{resource, App, DefaultError, Error, HttpResponse};
+    use once_cell::sync::Lazy;
+
+    use super::{Centralization, NormalizeReqPath, OriginalUrl};
+
+    #[cfg(test)]
+    mod centralization {
+        use super::*;
+
+        macro_rules! init_service {
+            () => {
+                init_service(
+                    App::new()
+                        .wrap(Centralization)
+                        .service(resource("/test").to(|| async { HttpResponse::Ok() }))
+                        .service(
+                            resource("/test-500").to(|| async { HttpResponse::new(StatusCode::INTERNAL_SERVER_ERROR) }),
+                        )
+                        .service(resource("/404").to(|| async { HttpResponse::Ok() }))
+                        .service(resource("/500").to(|| async { HttpResponse::Ok() })),
+                )
+                .await
+            };
+        }
+
+        #[ntex::test]
+        async fn not_found_path_normal() {
+            let app = init_service!();
+
+            let req = TestRequest::with_uri("/not-found-path").to_request();
+
+            let resp = app.call(req).await.unwrap();
+
+            assert_eq!(resp.status(), StatusCode::FOUND);
+            assert_eq!(
+                resp.response().headers().get(header::LOCATION).unwrap().to_str().unwrap(),
+                "/404?prev=%2Fnot-found-path"
+            );
+
+            // Validate extensions.
+            assert!(resp.response().extensions().get::<OriginalUrl>().is_some());
+            assert_eq!(resp.response().extensions().get::<OriginalUrl>().unwrap().as_str(), "/not-found-path");
+        }
+
+        #[ntex::test]
+        async fn original_404_normal() {
+            let app = init_service!();
+
+            let req = TestRequest::with_uri("/404").to_request();
+
+            let resp = app.call(req).await.unwrap();
+
+            assert_eq!(resp.status(), StatusCode::OK);
+
+            // Validate extensions.
+            assert!(resp.response().extensions().get::<OriginalUrl>().is_none());
+        }
+
+        #[ntex::test]
+        async fn not_found_path_from_json() {
+            let app = init_service!();
+
+            let mut req = TestRequest::with_uri("/not-found-path").to_request();
+
+            req.headers_mut().insert(header::ACCEPT, HeaderValue::from_str("application/json").unwrap());
+
+            let resp = app.call(req).await.unwrap();
+
+            assert_eq!(resp.status(), StatusCode::NOT_FOUND);
+
+            // Validate extensions.
+            assert!(resp.response().extensions().get::<OriginalUrl>().is_none());
+        }
+
+        #[ntex::test]
+        async fn not_found_path_from_ajax() {
+            let app = init_service!();
+
+            let mut req = TestRequest::with_uri("/not-found-path").to_request();
+
+            req.headers_mut().insert(
+                HeaderName::from_str("x-requested-with").unwrap(),
+                HeaderValue::from_str("XMLHttpRequest").unwrap(),
+            );
+
+            let resp = app.call(req).await.unwrap();
+
+            assert_eq!(resp.status(), StatusCode::NOT_FOUND);
+
+            // Validate extensions.
+            assert!(resp.response().extensions().get::<OriginalUrl>().is_none());
+        }
+
+        #[ntex::test]
+        async fn internal_error_path_normal() {
+            let app = init_service!();
+
+            let req = TestRequest::with_uri("/test-500").to_request();
+
+            let resp = app.call(req).await.unwrap();
+
+            assert_eq!(resp.status(), StatusCode::FOUND);
+            assert_eq!(
+                resp.response().headers().get(header::LOCATION).unwrap().to_str().unwrap(),
+                "/500?prev=%2Ftest-500"
+            );
+
+            // Validate extensions.
+            assert!(resp.response().extensions().get::<OriginalUrl>().is_some());
+            assert_eq!(resp.response().extensions().get::<OriginalUrl>().unwrap().as_str(), "/test-500");
+        }
+
+        #[ntex::test]
+        async fn original_500_normal() {
+            let app = init_service!();
+
+            let req = TestRequest::with_uri("/500").to_request();
+
+            let resp = app.call(req).await.unwrap();
+
+            assert_eq!(resp.status(), StatusCode::OK);
+
+            // Validate extensions.
+            assert!(resp.response().extensions().get::<OriginalUrl>().is_none());
+        }
+
+        #[ntex::test]
+        async fn internal_error_path_from_json() {
+            let app = init_service!();
+
+            let mut req = TestRequest::with_uri("/test-500").to_request();
+
+            req.headers_mut().insert(header::ACCEPT, HeaderValue::from_str("application/json").unwrap());
+
+            let resp = app.call(req).await.unwrap();
+
+            assert_eq!(resp.status(), StatusCode::INTERNAL_SERVER_ERROR);
+
+            // Validate extensions.
+            assert!(resp.response().extensions().get::<OriginalUrl>().is_none());
+        }
+
+        #[ntex::test]
+        async fn internal_error_path_from_ajax() {
+            let app = init_service!();
+
+            let mut req = TestRequest::with_uri("/test-500").to_request();
+
+            req.headers_mut().insert(
+                HeaderName::from_str("x-requested-with").unwrap(),
+                HeaderValue::from_str("XMLHttpRequest").unwrap(),
+            );
+
+            let resp = app.call(req).await.unwrap();
+
+            assert_eq!(resp.status(), StatusCode::INTERNAL_SERVER_ERROR);
+
+            // Validate extensions.
+            assert!(resp.response().extensions().get::<OriginalUrl>().is_none());
+        }
+    }
+
+    #[cfg(test)]
+    mod normalize_req_path {
+        use super::*;
+
+        const TEST_PATHS: Lazy<Vec<&str>> =
+            Lazy::new(|| vec!["/test/", "/test//////", "/test/?a=1", "/test//////?a=1"]);
+
+        macro_rules! normal_works_well {
+            ($app: expr) => {
+                let req = TestRequest::with_uri("/test").to_request();
+                let resp = $app.call(req).await.unwrap();
+                assert_eq!(resp.status(), StatusCode::OK);
+            };
+        }
+
+        #[ntex::test]
+        async fn default() {
+            let app = init_service(
+                App::new()
+                    .wrap(NormalizeReqPath::default())
+                    .service(resource("/test").to(|| async { HttpResponse::Ok() })),
+            )
+            .await;
+
+            // Works well.
+            normal_works_well!(app);
+
+            for path in TEST_PATHS.iter() {
+                // Create request object
+                let req = TestRequest::with_uri(*path).to_request();
+                // Execute application
+                let resp = app.call(req).await.unwrap();
+
+                assert_eq!(resp.status(), StatusCode::NOT_FOUND);
+            }
+        }
+
+        #[ntex::test]
+        async fn tailing_slash_default() {
+            let app = init_service(
+                App::new()
+                    .wrap(NormalizeReqPath::default().use_tailing_slash_operation())
+                    .service(resource("/test").to(|| async { HttpResponse::Ok() })),
+            )
+            .await;
+
+            // Works well.
+            normal_works_well!(app);
+
+            for path in TEST_PATHS.iter() {
+                // Create request object
+                let req = TestRequest::with_uri(*path).to_request();
+                // Execute application
+                let resp = app.call(req).await.unwrap();
+
+                let path_uri = Uri::from_str(*path).unwrap();
+                assert_eq!(resp.status(), StatusCode::OK);
+                assert_eq!(*resp.request().uri(), path_uri);
+                assert!(resp.request().extensions().get::<OriginalUrl>().is_some());
+                assert_eq!(resp.request().extensions().get::<OriginalUrl>().unwrap().as_str(), *path);
+            }
+        }
+
+        #[ntex::test]
+        async fn tailing_slash_redirection() {
+            let app = init_service(
+                App::new()
+                    .wrap(NormalizeReqPath::default().use_tailing_slash_operation().set_tailing_slash_redirect(true))
+                    .service(resource("/test").to(|| async { HttpResponse::Ok() })),
+            )
+            .await;
+
+            // Works well.
+            normal_works_well!(app);
+
+            for path in TEST_PATHS.iter() {
+                // Create request object
+                let req = TestRequest::with_uri(*path).to_request();
+                // Execute application
+                let resp = app.call(req).await.unwrap();
+
+                let path_uri = Uri::from_str(*path).unwrap();
+
+                // Validate status.
+                assert_eq!(resp.status(), StatusCode::FOUND);
+
+                // Validate uri.
+                let location_uri =
+                    Uri::from_str(resp.headers().get(header::LOCATION).unwrap().to_str().unwrap()).unwrap();
+                assert_eq!(location_uri.path(), path_uri.path().trim_end_matches("/"));
+                assert_eq!(location_uri.query(), path_uri.query());
+
+                // Validate extensions.
+                assert!(resp.response().extensions().get::<OriginalUrl>().is_some());
+                assert_eq!(resp.response().extensions().get::<OriginalUrl>().unwrap().as_str(), *path);
+            }
+        }
+
+        #[ntex::test]
+        async fn tailing_slash_redirection_307() {
+            let app = init_service(
+                App::new()
+                    .wrap(
+                        NormalizeReqPath::default()
+                            .use_tailing_slash_operation()
+                            .set_tailing_slash_redirect(true)
+                            .set_tailing_slash_redirect_status(StatusCode::TEMPORARY_REDIRECT),
+                    )
+                    .service(resource("/test").to(|| async { HttpResponse::Ok() })),
+            )
+            .await;
+
+            // Works well.
+            normal_works_well!(app);
+
+            for path in TEST_PATHS.iter() {
+                // Create request object
+                let req = TestRequest::with_uri(*path).to_request();
+                // Execute application
+                let resp = app.call(req).await.unwrap();
+
+                let path_uri = Uri::from_str(*path).unwrap();
+
+                // Validate status.
+                assert_eq!(resp.status(), StatusCode::TEMPORARY_REDIRECT);
+
+                // Validate uri.
+                let location_uri =
+                    Uri::from_str(resp.headers().get(header::LOCATION).unwrap().to_str().unwrap()).unwrap();
+                assert_eq!(location_uri.path(), path_uri.path().trim_end_matches("/"));
+                assert_eq!(location_uri.query(), path_uri.query());
+
+                // Validate extensions.
+                assert!(resp.response().extensions().get::<OriginalUrl>().is_some());
+                assert_eq!(resp.response().extensions().get::<OriginalUrl>().unwrap().as_str(), *path);
+            }
+        }
+    }
+}
