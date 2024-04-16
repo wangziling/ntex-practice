@@ -203,13 +203,6 @@ macro_rules! __normalize_req_path_impl {
 
         pub fn enable_interior_slash_ops(mut self) -> Self {
             match self.slash_mode.as_ref() {
-                NormalizeReqPathSlashMode::LetItGo => {
-                    self.slash_mode = Self::wrap_slash_mode(NormalizeReqPathSlashMode::NeedOperation {
-                        use_redirect: false,
-                        redirect_status: None,
-                        interior_slash_ops: None,
-                    });
-                }
                 NormalizeReqPathSlashMode::NeedOperation { use_redirect, redirect_status, interior_slash_ops }
                     if interior_slash_ops.is_none()
                         || matches!(*interior_slash_ops, Some(NormalizeReqPathInteriorSlashOps::LetItGo)) =>
