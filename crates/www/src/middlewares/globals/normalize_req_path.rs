@@ -448,6 +448,32 @@ mod tests {
     async fn interior_slash_ops() {
         let app = init_service(
             App::new()
+                .wrap(NormalizeReqPath::default().use_slash_operation().enable_interior_slash_ops())
+                .service(resource(TEST_URL).to(|| async { HttpResponse::Ok() })),
+        )
+        .await;
+
+        // Works well.
+        normal_works_well!(app);
+
+        for path in TEST_PATHS_WITH_INTERIOR_SLASH.iter() {
+            // Create request object
+            let req = TestRequest::with_uri(*path).to_request();
+            // Execute application
+            let resp = app.call(req).await.unwrap();
+
+            let path_uri = Uri::from_str(*path).unwrap();
+            assert_eq!(resp.status(), StatusCode::OK);
+            assert_eq!(*resp.request().uri(), path_uri);
+            assert!(resp.request().extensions().get::<OriginalUrl>().is_some());
+            assert_eq!(resp.request().extensions().get::<OriginalUrl>().unwrap().as_str(), *path);
+        }
+    }
+
+    #[ntex::test]
+    async fn interior_slash_ops_with_redirect() {
+        let app = init_service(
+            App::new()
                 .wrap(
                     NormalizeReqPath::default()
                         .use_slash_operation()
