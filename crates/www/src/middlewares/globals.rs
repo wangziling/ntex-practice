@@ -156,7 +156,11 @@ where
         if self.tailing_slash_operation_enabled() {
             if path.ends_with("/") {
                 let origin_uri_string = uri.to_string();
-                let transformed_path = path.trim_end_matches("/").to_string() + "/";
+                let mut transformed_path = path.trim_end_matches("/").to_string();
+
+                if transformed_path.is_empty() {
+                    transformed_path = "/".to_owned();
+                }
 
                 let transformed_url = match uri.query() {
                     Some(query) if !query.is_empty() => transformed_path + "?" + query,
