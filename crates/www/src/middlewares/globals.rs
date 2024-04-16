@@ -41,19 +41,29 @@ where
                     return Ok(res);
                 }
 
-                if !req.derived_from_ajax() {
-                    let new_res = server_redirect!("/500", prev_url: req.uri().to_string())?;
+                if !req.derived_from_ajax() && req.method() == Method::GET {
+                    // UNWRAP: Operation must be successful.
+                    let mut uri = "/500".parse::<ntex::http::Uri>().unwrap();
 
-                    {
-                        let extensions = res.response().extensions();
-                        let error_field = extensions.get::<ErrorField>();
+                    match req.uri().path_and_query() {
+                        Some(path_query) => {
+                            let query_map = uri
+                                .update_query("prev".to_string(), Some(path_query.to_string()))
+                                .map_err(Into::<BoxedAppError>::into)?;
 
-                        if error_field.is_some() {
-                            new_res.extensions_mut().insert(error_field.unwrap().clone());
+                            match query_to_string(query_map) {
+                                Ok(query_map_string) if !query_map_string.is_empty() => {
+                                    *res.response_mut() = server_redirect!(uri.path().to_string() + "?" + &query_map_string, prev_url: req.uri().to_string())?;
+
+                                    return Ok(res);
+                                }
+                                _ => {}
+                            }
                         }
+                        _ => {}
                     }
 
-                    *res.response_mut() = new_res;
+                    *res.response_mut() = server_redirect!(uri.path().to_string(), prev_url: req.uri().to_string())?;
 
                     return Ok(res);
                 }
@@ -70,6 +80,9 @@ where
                 let mut uri = "/404".parse::<ntex::http::Uri>().unwrap();
 
                 if !req.derived_from_ajax() && req.method() == Method::GET {
+                    // UNWRAP: Operation must be successful.
+                    let mut uri = "/404".parse::<ntex::http::Uri>().unwrap();
+
                     match req.uri().path_and_query() {
                         Some(path_query) => {
                             let query_map = uri
@@ -139,7 +152,7 @@ where
     Err: ErrorRenderer,
 {
     type Response = WebResponse;
-    type Error = Error;
+    type Error = S::Error;
 
     ntex::forward_poll_ready!(service);
 
