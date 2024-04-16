@@ -24,7 +24,7 @@ where
     Err: ErrorRenderer,
 {
     type Response = WebResponse;
-    type Error = Error;
+    type Error = S::Error;
 
     ntex::forward_poll_ready!(service);
 
