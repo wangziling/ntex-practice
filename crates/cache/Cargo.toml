@@ -17,3 +17,5 @@ moka.workspace = true
 tokio.workspace = true
 serde_json.workspace = true
 once_cell.workspace = true
+ntex.workspace = true
+thiserror.workspace = true
