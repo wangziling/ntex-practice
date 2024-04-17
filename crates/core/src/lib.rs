@@ -19,6 +19,7 @@ pub mod prelude {
 }
 
 pub mod error_prelude {
+    pub use crate::app_error_impl;
     pub use crate::error::{anyhow_error, internal_app_error, AppError, AppResult, BoxedAppError};
     pub use crate::prelude::*;
 

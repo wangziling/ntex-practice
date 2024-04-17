@@ -92,3 +92,60 @@ pub fn server_error_response(description: std::borrow::Cow<'static, str>) -> nte
 pub fn anyhow_error(description: std::borrow::Cow<'static, str>) -> BoxedAppError {
     anyhow!(description).into()
 }
+
+pub trait AppErrorExt: ToString {
+    fn into_app_error(&self) -> BoxedAppError {
+        anyhow_error(self.to_string().into())
+    }
+}
+
+#[macro_export]
+macro_rules! app_error_impl {
+    ($ident:ident) => {
+        impl From<$ident> for BoxedAppError {
+            fn from(error: $ident) -> BoxedAppError {
+                Box::new(error)
+            }
+        }
+
+        impl WebResponseError for $ident {
+            fn error_response(&self, req: &ntex::web::HttpRequest) -> ntex::http::Response {
+                use $crate::features::RequestUtils;
+
+                if req.wants_json() {
+                    return $crate::server_response_failed!(message: self.to_string()).into();
+                }
+
+                return self.response();
+            }
+        }
+
+        impl $crate::error::AppErrorExt for $ident {}
+    };
+
+    ($ident:ident, $status_code:expr) => {
+        impl From<$ident> for BoxedAppError {
+            fn from(error: $ident) -> BoxedAppError {
+                Box::new(error)
+            }
+        }
+
+        impl WebResponseError for $ident {
+            fn status_code(&self) -> ntex::http::StatusCode {
+                $status_code
+            }
+
+            fn error_response(&self, req: &ntex::web::HttpRequest) -> ntex::http::Response {
+                use $crate::features::RequestUtils;
+
+                if req.wants_json() {
+                    return $crate::server_response_failed!(message: self.to_string()).into();
+                }
+
+                return self.response();
+            }
+        }
+
+        impl $crate::error::AppErrorExt for $ident {}
+    };
+}
