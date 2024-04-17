@@ -1,4 +1,3 @@
-use crate::error::prelude::*;
 use web_cache::prelude::*;
 use web_core::handler_prelude::*;
 
@@ -9,10 +8,7 @@ struct HelloWorld {
 
 // #[instrument(skip_all)]
 pub async fn hello(_req: HttpRequest, state: State<crate::app::AppState>) -> AppResult<&'static str> {
-    // let extensions = req.extensions();
-    // let distribute_cache = extensions
-    //     .get::<DistributeCacheExtension>()
-    //     .ok_or_else(|| crate::error::ExtensionError::DistributeCacheMissing.into_app_error())?;
+    // let distribute_cache = req.distribute_cache()?;
     // let _test_val = distribute_cache.get::<Option<String>, _>("test").await?;
 
     let _test_val = state.distribute_cache.get::<Option<String>, _>("test").await?;
@@ -22,7 +18,11 @@ pub async fn hello(_req: HttpRequest, state: State<crate::app::AppState>) -> App
     Ok("Hello world!")
 }
 
-pub async fn hello2(state: State<crate::app::AppState>) -> AppResult<impl Responder> {
+pub async fn hello2(
+    state: State<crate::app::AppState>,
+    // _memory_cache: MemoryCacheExtension,
+) -> AppResult<impl Responder> {
+    // let memory_cache = memory_cache.read().await;
     let memory_cache = state.memory_cache.read().await;
 
     // Closure. Make sure we only insert once.

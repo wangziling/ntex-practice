@@ -19,6 +19,7 @@ async fn main() -> Result<()> {
                     .set_redirect_status(301)
                     .enable_interior_slash_ops(),
             )
+            // .wrap(web_www::middlewares::extensions::PrepareCaches)
             .wrap(ntex::web::middleware::Compress::default())
             .wrap(ntex::web::middleware::DefaultHeaders::new().header("X-Powered-By", "ntex-rs"))
             .state(web_www::app::AppState(app.clone()))
