@@ -1,4 +1,4 @@
-use web_core::{error_prelude::*, features::RequestUtils, server_response_failed};
+use web_core::error_prelude::*;
 
 #[derive(thiserror::Error, Debug)]
 pub enum MiddlewareError {
@@ -10,13 +10,4 @@ pub enum MiddlewareError {
     AppStateMissing,
 }
 
-#[derive(thiserror::Error, Debug)]
-pub enum ExtensionError {
-    #[error("Distribute cache missing.")]
-    DistributeCacheMissing,
-    #[error("Persistent cache missing.")]
-    PersistentCacheMissing,
-}
-
 app_error_impl!(MiddlewareError, ntex::http::StatusCode::BAD_REQUEST);
-app_error_impl!(ExtensionError);
