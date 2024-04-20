@@ -1,4 +1,3 @@
-#![allow(unused)]
 use crate::error::ExtensionError;
 use fred::prelude::*;
 use ntex::{
@@ -7,7 +6,6 @@ use ntex::{
     web::{FromRequest, HttpRequest, WebRequest},
 };
 use std::{
-    convert::Infallible,
     ops::{Deref, DerefMut},
     sync::Arc,
     time::Duration,

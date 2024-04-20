@@ -7,7 +7,6 @@ mod impls;
 use once_cell::sync::Lazy;
 use web_core::prelude::*;
 
-#[allow(unused)]
 pub mod prelude {
     pub use crate::impls::distribute::prelude::*;
     pub use crate::impls::distribute::{
