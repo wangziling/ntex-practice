@@ -23,3 +23,11 @@ moka.workspace = true
 rslock.workspace = true
 memmem.workspace = true
 paste.workspace = true
+utoipa.workspace = true
+rustls = { version = "0.23", optional = true }
+rustls-pemfile = { version = "2", optional = true }
+
+[features]
+# default = []
+# default = ["tls-rustls"] # For HTTPS Mode.
+tls-rustls = ["dep:rustls", "dep:rustls-pemfile"]

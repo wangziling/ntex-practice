@@ -5,6 +5,9 @@ pub mod redis;
 pub mod regex;
 pub mod view_template;
 
+#[cfg(feature = "tls-rustls")]
+pub mod tls;
+
 pub use internal_error::internal_app_error;
 use internal_error::InternalAppError;
 
