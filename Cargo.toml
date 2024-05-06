@@ -23,6 +23,7 @@ ntex = { version = "1.2", features = [
   "tokio",
   "cookie",
   "compress",
+  "rustls",
 ], default-features = false }
 tracing = { version = "0.1" }
 tracing-subscriber = { version = "0.3", features = [
@@ -46,3 +47,5 @@ tokio = { version = "1.37", features = ["sync"] }
 rslock = { version = "0.3" }
 memmem = { version = "0.1" }
 paste = { version = "1.0" }
+rustls = { version = "0.23" }
+rustls-pemfile = { version = "2" }

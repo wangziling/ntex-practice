@@ -25,6 +25,8 @@ fred.workspace = true
 tokio.workspace = true
 once_cell.workspace = true
 regex.workspace = true
+rustls.workspace = true
+rustls-pemfile.workspace = true
 
 [[bin]]
 name = "server"

@@ -1,4 +1,4 @@
-use std::sync::Arc;
+use std::{path::Path, sync::Arc};
 use web_core::prelude::*;
 
 #[ntex::main]
@@ -25,7 +25,13 @@ async fn main() -> Result<()> {
             .state(web_www::app::AppState(app.clone()))
             .configure(web_www::routes::build_routes)
     })
-    .bind(server_bind)?
+    .bind_rustls(
+        server_bind,
+        web_www::utils::server::generate_tls_openssl_config(
+            Path::new(env!("CARGO_MANIFEST_DIR")).join("self_signed_certs/key.pem"),
+            Path::new(env!("CARGO_MANIFEST_DIR")).join("self_signed_certs/cert.pem"),
+        )?,
+    )?
     .run()
     .await?;
 
