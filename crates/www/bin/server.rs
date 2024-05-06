@@ -1,4 +1,4 @@
-use std::{path::Path, sync::Arc};
+use std::sync::Arc;
 use web_core::prelude::*;
 
 #[ntex::main]
@@ -9,7 +9,7 @@ async fn main() -> Result<()> {
     let server_bind = (server_config.ip.clone(), server_config.port.clone());
     let app = Arc::new(web_www::app::App::new(server_config).await?);
 
-    ntex::web::HttpServer::new(move || {
+    let server = ntex::web::HttpServer::new(move || {
         ntex::web::App::new()
             .wrap(web_www::middlewares::globals::Centralization)
             .wrap(
@@ -24,16 +24,21 @@ async fn main() -> Result<()> {
             .wrap(ntex::web::middleware::DefaultHeaders::new().header("X-Powered-By", "ntex-rs"))
             .state(web_www::app::AppState(app.clone()))
             .configure(web_www::routes::build_routes)
-    })
-    .bind_rustls(
+    });
+
+    #[cfg(feature = "tls-rustls")]
+    let server = server.bind_rustls(
         server_bind,
         web_www::utils::server::generate_tls_openssl_config(
-            Path::new(env!("CARGO_MANIFEST_DIR")).join("self_signed_certs/key.pem"),
-            Path::new(env!("CARGO_MANIFEST_DIR")).join("self_signed_certs/cert.pem"),
+            std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("self_signed_certs/key.pem"),
+            std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("self_signed_certs/cert.pem"),
         )?,
-    )?
-    .run()
-    .await?;
+    )?;
+
+    #[cfg(not(feature = "tls-rustls"))]
+    let server = server.bind(server_bind)?;
+
+    server.run().await?;
 
     Ok(())
 }

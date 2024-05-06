@@ -25,9 +25,14 @@ fred.workspace = true
 tokio.workspace = true
 once_cell.workspace = true
 regex.workspace = true
-rustls.workspace = true
-rustls-pemfile.workspace = true
+rustls = { version = "0.23", optional = true }
+rustls-pemfile = { version = "2", optional = true }
 
 [[bin]]
 name = "server"
 path = "bin/server.rs"
+
+[features]
+default = []
+# default = ["tls-rustls"] # For HTTPS Mode.
+tls-rustls = ["dep:rustls", "dep:rustls-pemfile"]

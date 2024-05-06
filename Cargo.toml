@@ -47,5 +47,3 @@ tokio = { version = "1.37", features = ["sync"] }
 rslock = { version = "0.3" }
 memmem = { version = "0.1" }
 paste = { version = "1.0" }
-rustls = { version = "0.23" }
-rustls-pemfile = { version = "2" }

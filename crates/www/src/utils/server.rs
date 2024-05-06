@@ -1,6 +1,7 @@
 use std::{fs::File, io::BufReader, path::Path};
 use web_core::prelude::*;
 
+#[cfg(feature = "tls-rustls")]
 pub fn generate_tls_openssl_config<T>(key_file_path: T, cert_file_path: T) -> Result<rustls::ServerConfig>
 where
     T: AsRef<Path>,
