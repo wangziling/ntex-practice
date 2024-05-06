@@ -5,6 +5,9 @@
     "memmem",
     "moka",
     "ntex",
-    "rslock"
+    "pemfile",
+    "rslock",
+    "rustls",
+    "utoipa"
   ]
 }
