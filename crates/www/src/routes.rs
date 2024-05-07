@@ -26,7 +26,21 @@ fn build_greeting_routes(cfg: &mut ServiceConfig) {
     );
 }
 
+fn build_swagger_routes(cfg: &mut ServiceConfig) {
+    let swagger_config =
+        std::sync::Arc::new(utoipa_swagger_ui::Config::new(["/swagger-ui/swagger.json"]).use_base_layout());
+
+    cfg.service(
+        scope("/swagger-ui")
+            .state(swagger_config)
+            .service(resource("/{tail}*").route(get().to(crate::openapi::get_swagger))),
+    );
+}
+
 pub fn build_routes(cfg: &mut ServiceConfig) {
+    // Swagger.
+    build_swagger_routes(cfg);
+
     build_greeting_routes(cfg);
     build_view_routes(cfg);
 }

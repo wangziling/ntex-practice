@@ -25,6 +25,8 @@ fred.workspace = true
 tokio.workspace = true
 once_cell.workspace = true
 regex.workspace = true
+utoipa.workspace = true
+utoipa-swagger-ui ={ version = "7" }
 rustls = { version = "0.23", optional = true }
 rustls-pemfile = { version = "2", optional = true }
 

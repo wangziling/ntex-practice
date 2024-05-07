@@ -1,12 +1,16 @@
+use crate::models::controllers::HelloWorld;
+use utoipa::ToSchema;
 use web_cache::prelude::*;
 use web_core::handler_prelude::*;
 
-#[derive(Serialize)]
-struct HelloWorld {
-    greeting: &'static str,
-}
-
 // #[instrument(skip_all)]
+#[utoipa::path(
+    get,
+    path = "/greeting/hello",
+    responses(
+        (status = 200, description = "Hello world.", body = String),
+    ),
+)]
 pub async fn hello(_req: HttpRequest, state: State<crate::app::AppState>) -> AppResult<&'static str> {
     // let distribute_cache = req.distribute_cache()?;
     // let _test_val = distribute_cache.get::<Option<String>, _>("test").await?;
@@ -18,6 +22,14 @@ pub async fn hello(_req: HttpRequest, state: State<crate::app::AppState>) -> App
     Ok("Hello world!")
 }
 
+#[utoipa::path(
+    get,
+    path = "/greeting/hello2",
+    responses(
+        (status = 200, description = "Hello world.", body = ServerResponseHelloWorld),
+        (status = 500, description = "Something wrong.", body = ServerResponseHelloWorld),
+    ),
+)]
 pub async fn hello2(
     state: State<crate::app::AppState>,
     // _memory_cache: MemoryCacheExtension,
@@ -42,6 +54,14 @@ pub async fn hello2(
     Ok(server_response_success!(data: HelloWorld { greeting: "你好，世界。" }))
 }
 
+#[utoipa::path(
+    get,
+    path = "/greeting/hello3",
+    request_body(content = Option<()>, description = "Json format", content_type = "application/json"),
+    responses(
+        (status = 300, description = "Hello world.", body = ServerResponseNullData),
+    ),
+)]
 pub async fn hello3(req: HttpRequest, state: State<crate::app::AppState>) -> AppResult<impl Responder> {
     // Make sure that only one process here on concurrent env now.
     // If you use `ab` bench tool to simulate concurrent request.
@@ -62,6 +82,14 @@ pub async fn hello3(req: HttpRequest, state: State<crate::app::AppState>) -> App
     Ok(server_response_success!(status_code: 300))
 }
 
+#[utoipa::path(
+    get,
+    path = "/greeting/hello4",
+    request_body(content = Option<()>, description = "Json format", content_type = "application/json"),
+    responses(
+        (status = 401, description = "Hello world.", body = ServerResponseNullData),
+    ),
+)]
 pub async fn hello4(_state: State<crate::app::AppState>) -> AppResult<impl Responder> {
     Ok(server_response_success!(status_code: 401))
 }

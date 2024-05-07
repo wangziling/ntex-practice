@@ -16,3 +16,5 @@ pub mod utils;
 mod constants;
 mod controllers;
 mod error;
+mod models;
+mod openapi;
