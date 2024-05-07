@@ -1,14 +1,13 @@
 use super::{server_error_response, AppError, BoxedAppError};
+use utoipa::ToSchema;
 
-#[derive(Debug)]
+#[derive(Debug, ToSchema)]
 struct RegExpError {
     pub error: regex::Error,
 }
 
 impl AppError for RegExpError {
     fn response(&self) -> ntex::http::Response {
-        error!(error = %self.error, "RegExp Error");
-
         server_error_response(format!("{}", self).into())
     }
 }

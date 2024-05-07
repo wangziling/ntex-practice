@@ -1,14 +1,13 @@
 use super::{server_error_response, AppError, BoxedAppError};
+use utoipa::ToSchema;
 
-#[derive(Debug)]
+#[derive(Debug, ToSchema)]
 struct RedisError {
     pub error: fred::error::RedisError,
 }
 
 impl AppError for RedisError {
     fn response(&self) -> ntex::http::Response {
-        error!(error = %self.error, "Redis Error");
-
         server_error_response(format!("{}", self).into())
     }
 }

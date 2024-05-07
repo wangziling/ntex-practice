@@ -1,5 +1,6 @@
 use crate::error::{AppResult, BoxedAppError};
 use serde::{Deserialize, Serialize};
+use utoipa::ToSchema;
 
 pub struct OriginalUrl(String);
 
@@ -52,7 +53,7 @@ impl<Err: ntex::web::ErrorRenderer> HttpResponseExt<Err> for ntex::web::HttpResp
     }
 }
 
-#[derive(Serialize, Default, Deserialize, PartialEq, Eq, Debug)]
+#[derive(Serialize, Default, Deserialize, PartialEq, Eq, Debug, ToSchema)]
 #[serde(rename_all = "lowercase")]
 pub enum ResponseStatus {
     #[default]
@@ -61,7 +62,7 @@ pub enum ResponseStatus {
     Warning,
 }
 
-#[derive(Serialize, Deserialize, PartialEq, Eq, Debug)]
+#[derive(Serialize, Deserialize, PartialEq, Eq, Debug, ToSchema)]
 pub struct ServerResponse<D: Serialize, M: AsRef<str> + Serialize> {
     data: Option<D>,
     message: Option<M>,

@@ -1,6 +1,7 @@
 use super::{AppError, BoxedAppError, ErrorField};
+use utoipa::ToSchema;
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, ToSchema)]
 pub struct InternalAppError {
     pub description: std::borrow::Cow<'static, str>,
 }

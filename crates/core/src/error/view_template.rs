@@ -1,14 +1,13 @@
 use super::{server_error_response, AppError, BoxedAppError};
+use utoipa::ToSchema;
 
-#[derive(Debug)]
+#[derive(Debug, ToSchema)]
 struct ViewTemplateError {
     error: sailfish::RenderError,
 }
 
 impl AppError for ViewTemplateError {
     fn response(&self) -> ntex::web::HttpResponse {
-        error!(error = %self.error, "View Template Error");
-
         server_error_response(format!("{}", self).into())
     }
 }

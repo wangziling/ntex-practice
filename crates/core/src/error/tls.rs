@@ -1,6 +1,7 @@
 use super::{server_error_response, AppError, BoxedAppError};
+use utoipa::ToSchema;
 
-#[derive(Debug)]
+#[derive(Debug, ToSchema)]
 struct RustlsError {
     pub error: anyhow::Error,
 }
