@@ -5,6 +5,7 @@
     "memmem",
     "moka",
     "ntex",
+    "openapi",
     "pemfile",
     "rslock",
     "rustls",
