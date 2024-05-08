@@ -2,7 +2,7 @@ use std::{fs::File, io::BufReader, path::Path};
 use web_core::prelude::*;
 
 #[cfg(feature = "tls-rustls")]
-fn __generate_tls_openssl_config<T>(key_file_path: T, cert_file_path: T) -> Result<rustls::ServerConfig>
+fn __generate_tls_rustls_config<T>(key_file_path: T, cert_file_path: T) -> Result<rustls::ServerConfig>
 where
     T: AsRef<Path>,
 {
@@ -17,11 +17,11 @@ where
 }
 
 #[cfg(feature = "tls-rustls")]
-pub fn generate_tls_openssl_config<T>(key_file_path: T, cert_file_path: T) -> Result<rustls::ServerConfig>
+pub fn generate_tls_rustls_config<T>(key_file_path: T, cert_file_path: T) -> Result<rustls::ServerConfig>
 where
     T: AsRef<Path>,
 {
-    __generate_tls_openssl_config(key_file_path, cert_file_path).map_err(|e: anyhow::Error| {
+    __generate_tls_rustls_config(key_file_path, cert_file_path).map_err(|e: anyhow::Error| {
         eprintln!("Tls Error:{}", Into::<rustls::Error>::into(rustls::CertificateError::BadSignature));
 
         e

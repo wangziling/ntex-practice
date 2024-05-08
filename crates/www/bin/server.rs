@@ -29,7 +29,7 @@ async fn main() -> Result<()> {
     #[cfg(feature = "tls-rustls")]
     let server = server.bind_rustls(
         server_bind,
-        web_www::utils::server::generate_tls_openssl_config(
+        web_www::utils::server::generate_tls_rustls_config(
             std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("self_signed_certs/key.pem"),
             std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("self_signed_certs/cert.pem"),
         )?,
