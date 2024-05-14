@@ -22,8 +22,7 @@ web_guard = { path = "./crates/guard" }
 ntex = { version = "1.2", features = [
   "tokio",
   "cookie",
-  "compress",
-  "rustls",
+  "compress"
 ], default-features = false }
 tracing = { version = "0.1" }
 tracing-subscriber = { version = "0.3", features = [

@@ -30,4 +30,4 @@ rustls-pemfile = { version = "2", optional = true }
 [features]
 default = []
 # default = ["tls-rustls"] # For HTTPS Mode.
-tls-rustls = ["dep:rustls", "dep:rustls-pemfile"]
+tls-rustls = ["dep:rustls", "dep:rustls-pemfile", "ntex/rustls"]

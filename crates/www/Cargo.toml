@@ -37,4 +37,4 @@ path = "bin/server.rs"
 [features]
 default = []
 # default = ["tls-rustls"] # For HTTPS Mode.
-tls-rustls = ["dep:rustls", "dep:rustls-pemfile", "web_core/tls-rustls"]
+tls-rustls = ["dep:rustls", "dep:rustls-pemfile", "web_core/tls-rustls", "ntex/rustls"]
