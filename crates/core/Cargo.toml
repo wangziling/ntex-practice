@@ -28,6 +28,6 @@ rustls = { version = "0.23", optional = true }
 rustls-pemfile = { version = "2", optional = true }
 
 [features]
-# default = []
+default = []
 # default = ["tls-rustls"] # For HTTPS Mode.
 tls-rustls = ["dep:rustls", "dep:rustls-pemfile"]
