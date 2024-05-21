@@ -21,7 +21,7 @@ fred.workspace = true
 regex.workspace = true
 moka.workspace = true
 rslock.workspace = true
-memmem.workspace = true
+memchr.workspace = true
 paste.workspace = true
 utoipa.workspace = true
 rustls = { version = "0.23", optional = true }

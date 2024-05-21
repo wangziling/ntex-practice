@@ -3,6 +3,7 @@
     "endregion",
     "impls",
     "memmem",
+    "memchr",
     "moka",
     "ntex",
     "openapi",
