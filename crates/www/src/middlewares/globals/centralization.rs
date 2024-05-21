@@ -46,25 +46,22 @@ where
                     // UNWRAP: Operation must be successful.
                     let mut uri = INTERNAL_SERVER_ERROR_REQ_PATH.parse::<ntex::http::Uri>().unwrap();
 
-                    match req.uri().path_and_query() {
-                        Some(path_query) => {
-                            let query_map = uri
-                                .update_query(PREV_URL_SEARCH_QUERY_KEY.to_string(), Some(path_query.to_string()))
-                                .map_err(Into::<BoxedAppError>::into)?;
+                    if let Some(path_query) = req.uri().path_and_query() {
+                        let query_map = uri
+                            .update_query(PREV_URL_SEARCH_QUERY_KEY.to_string(), Some(path_query.to_string()))
+                            .map_err(Into::<BoxedAppError>::into)?;
 
-                            match query_to_string(query_map) {
-                                Ok(query_map_string) if !query_map_string.is_empty() => {
-                                    *res.response_mut() = server_redirect!(uri.path().to_string() + "?" + &query_map_string, prev_url: req.uri().to_string())?;
+                        match query_to_string(query_map) {
+                            Ok(query_map_string) if !query_map_string.is_empty() => {
+                                *res.response_mut() = server_redirect!(uri.path().to_string() + "?" + &query_map_string, prev_url: req.uri().to_string())?;
 
-                                    return Ok(res);
-                                }
-                                _ => {}
+                                return Ok(res);
                             }
+                            _ => {}
                         }
-                        _ => {}
                     }
 
-                    *res.response_mut() = server_redirect!(uri.path().to_string(), prev_url: req.uri().to_string())?;
+                    *res.response_mut() = server_redirect!(uri.path(), prev_url: req.uri().to_string())?;
 
                     return Ok(res);
                 }
@@ -80,25 +77,22 @@ where
                     // UNWRAP: Operation must be successful.
                     let mut uri = NOT_FOUND_REQ_PATH.parse::<ntex::http::Uri>().unwrap();
 
-                    match req.uri().path_and_query() {
-                        Some(path_query) => {
-                            let query_map = uri
-                                .update_query(PREV_URL_SEARCH_QUERY_KEY.to_string(), Some(path_query.to_string()))
-                                .map_err(Into::<BoxedAppError>::into)?;
+                    if let Some(path_query) = req.uri().path_and_query() {
+                        let query_map = uri
+                            .update_query(PREV_URL_SEARCH_QUERY_KEY.to_string(), Some(path_query.to_string()))
+                            .map_err(Into::<BoxedAppError>::into)?;
 
-                            match query_to_string(query_map) {
-                                Ok(query_map_string) if !query_map_string.is_empty() => {
-                                    *res.response_mut() = server_redirect!(uri.path().to_string() + "?" + &query_map_string, prev_url: req.uri().to_string())?;
+                        match query_to_string(query_map) {
+                            Ok(query_map_string) if !query_map_string.is_empty() => {
+                                *res.response_mut() = server_redirect!(uri.path().to_string() + "?" + &query_map_string, prev_url: req.uri().to_string())?;
 
-                                    return Ok(res);
-                                }
-                                _ => {}
+                                return Ok(res);
                             }
+                            _ => {}
                         }
-                        _ => {}
                     }
 
-                    *res.response_mut() = server_redirect!(uri.path().to_string(), prev_url: req.uri().to_string())?;
+                    *res.response_mut() = server_redirect!(uri.path(), prev_url: req.uri().to_string())?;
 
                     return Ok(res);
                 }

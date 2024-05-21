@@ -97,7 +97,7 @@ pub fn anyhow_error(description: std::borrow::Cow<'static, str>) -> BoxedAppErro
 }
 
 pub trait AppErrorExt: ToString {
-    fn into_app_error(&self) -> BoxedAppError {
+    fn as_app_error(&self) -> BoxedAppError {
         anyhow_error(self.to_string().into())
     }
 }

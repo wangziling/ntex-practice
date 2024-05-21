@@ -53,7 +53,7 @@ where
 pub fn list(key: &str) -> anyhow::Result<Vec<String>> {
     let values = match var(key)? {
         Some(content) if content.is_empty() => vec![],
-        Some(content) => content.split(",").map(str::trim).map(String::from).collect(),
+        Some(content) => content.split(',').map(str::trim).map(String::from).collect(),
         None => vec![],
     };
 
@@ -70,7 +70,7 @@ where
         Some(content) if content.is_empty() => vec![],
         None => vec![],
         Some(content) => content
-            .split(",")
+            .split(',')
             .map(str::trim)
             .map(|s| f(s).with_context(|| format!("Failed to parse value \"{s}\" of {key} environment variable.")))
             .collect::<Result<_, _>>()?,

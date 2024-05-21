@@ -24,7 +24,7 @@ pub fn redirect<U: AsRef<str>, S: TryInto<ntex::http::StatusCode>>(
     status_code: Option<S>,
 ) -> AppResult<ntex::web::HttpResponse> {
     let mut response = ntex::web::HttpResponse::new(
-        status_code.and_then(crate::utils::parse_into_status_code).unwrap_or_else(|| ntex::http::StatusCode::FOUND),
+        status_code.and_then(crate::utils::parse_into_status_code).unwrap_or(ntex::http::StatusCode::FOUND),
     );
 
     response.headers_mut().insert(
@@ -32,8 +32,8 @@ pub fn redirect<U: AsRef<str>, S: TryInto<ntex::http::StatusCode>>(
         url.as_ref().parse::<ntex::http::header::HeaderValue>().map_err(Into::<BoxedAppError>::into)?,
     );
 
-    if prev_url.is_some() {
-        response.extensions_mut().insert(OriginalUrl(prev_url.unwrap()));
+    if let Some(prev_url) = prev_url {
+        response.extensions_mut().insert(OriginalUrl(prev_url));
     }
 
     Ok(response)
@@ -87,7 +87,7 @@ where
             data,
             status_code: status_code
                 .and_then(crate::utils::parse_into_status_code)
-                .unwrap_or_else(|| ntex::http::StatusCode::OK),
+                .unwrap_or(ntex::http::StatusCode::OK),
         }
     }
 
@@ -102,7 +102,7 @@ where
             data,
             status_code: status_code
                 .and_then(crate::utils::parse_into_status_code)
-                .unwrap_or_else(|| ntex::http::StatusCode::OK),
+                .unwrap_or(ntex::http::StatusCode::OK),
         }
     }
 
@@ -117,7 +117,7 @@ where
             data,
             status_code: status_code
                 .and_then(crate::utils::parse_into_status_code)
-                .unwrap_or_else(|| ntex::http::StatusCode::OK),
+                .unwrap_or(ntex::http::StatusCode::OK),
         }
     }
 }

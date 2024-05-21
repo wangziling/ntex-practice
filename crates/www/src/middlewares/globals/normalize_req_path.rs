@@ -3,7 +3,7 @@ use once_cell::sync::Lazy;
 use regex::Regex;
 use web_core::middleware_prelude::*;
 
-const MERGE_MULTIPLE_INTERIOR_SLASH_REGEXP: Lazy<Regex> = Lazy::new(|| Regex::new(r"//+").unwrap());
+static MERGE_MULTIPLE_INTERIOR_SLASH_REGEXP: Lazy<Regex> = Lazy::new(|| Regex::new(r"//+").unwrap());
 
 #[derive(Default, Clone)]
 pub enum NormalizeReqPathInteriorSlashOpsMode {
@@ -31,6 +31,7 @@ pub enum NormalizeReqPathSlashMode {
     },
 }
 
+#[derive(Default)]
 pub struct NormalizeReqPath {
     slash_mode: std::rc::Rc<NormalizeReqPathSlashMode>,
 }
@@ -40,12 +41,6 @@ impl<S> Middleware<S> for NormalizeReqPath {
 
     fn create(&self, service: S) -> Self::Service {
         NormalizeReqPathInner { service, slash_mode: self.slash_mode.clone() }
-    }
-}
-
-impl Default for NormalizeReqPath {
-    fn default() -> Self {
-        Self { slash_mode: Default::default() }
     }
 }
 
@@ -78,17 +73,14 @@ where
             let mut is_path_changed = false;
 
             if self.interior_slash_ops_enabled() {
-                match self.interior_slash_ops() {
-                    Some(NormalizeReqPathInteriorSlashOpsMode::MergeMultiple) => {
-                        let result = MERGE_MULTIPLE_INTERIOR_SLASH_REGEXP.replace_all(path, "/").to_string();
-                        if result != path {
-                            path = result.leak();
+                if let Some(NormalizeReqPathInteriorSlashOpsMode::MergeMultiple) = self.interior_slash_ops() {
+                    let result = MERGE_MULTIPLE_INTERIOR_SLASH_REGEXP.replace_all(path, "/").to_string();
+                    if result != path {
+                        path = result.leak();
 
-                            // Mark as `changed`.
-                            is_path_changed = true;
-                        }
+                        // Mark as `changed`.
+                        is_path_changed = true;
                     }
-                    None => {}
                 }
             }
 
@@ -113,11 +105,11 @@ where
             }
 
             let origin_uri_string = uri.to_string();
-            if path.ends_with("/") {
-                let mut transformed_path = path.trim_end_matches("/").to_owned();
+            if path.ends_with('/') {
+                let mut transformed_path = path.trim_end_matches('/').to_owned();
 
                 if transformed_path.is_empty() {
-                    transformed_path = "/".to_owned();
+                    "/".clone_into(&mut transformed_path);
                 }
 
                 // Return.
@@ -251,10 +243,10 @@ macro_rules! __normalize_req_path_impl {
         #[inline]
         pub fn interior_slash_ops_enabled(&self) -> bool {
             match self.slash_mode.as_ref() {
-                NormalizeReqPathSlashMode::NeedOperation { interior_slash_ops, .. } => match *interior_slash_ops {
-                    Some(NormalizeReqPathInteriorSlashOps::NeedOperation { .. }) => true,
-                    _ => false,
-                },
+                NormalizeReqPathSlashMode::NeedOperation {
+                    interior_slash_ops: Some(NormalizeReqPathInteriorSlashOps::NeedOperation { .. }),
+                    ..
+                } => true,
                 _ => false,
             }
         }
@@ -262,10 +254,10 @@ macro_rules! __normalize_req_path_impl {
         #[inline]
         pub fn interior_slash_ops(&self) -> Option<&NormalizeReqPathInteriorSlashOpsMode> {
             match self.slash_mode.as_ref() {
-                NormalizeReqPathSlashMode::NeedOperation { interior_slash_ops, .. } => match interior_slash_ops {
-                    Some(NormalizeReqPathInteriorSlashOps::NeedOperation { mode, .. }) => Some(mode),
-                    _ => None,
-                },
+                NormalizeReqPathSlashMode::NeedOperation {
+                    interior_slash_ops: Some(NormalizeReqPathInteriorSlashOps::NeedOperation { mode, .. }),
+                    ..
+                } => Some(mode),
                 _ => None,
             }
         }

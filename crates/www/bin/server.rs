@@ -6,7 +6,7 @@ async fn main() -> Result<()> {
     web_www::utils::tracing::init()?;
 
     let server_config = web_www::config::Server::from_env()?;
-    let server_bind = (server_config.ip.clone(), server_config.port.clone());
+    let server_bind = (server_config.ip, server_config.port);
     let app = Arc::new(web_www::app::App::new(server_config).await?);
 
     let server = ntex::web::HttpServer::new(move || {
